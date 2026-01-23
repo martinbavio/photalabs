@@ -1,6 +1,6 @@
 # PhotaLabs - AI Image Editing Playground
 
-A mini AI image editing playground with mock image generation, character management, and generation history.
+A mini AI image editing playground with real AI image generation (DALL-E 3 & Nano Banana Pro), character management, and generation history.
 
 ## How to run the project
 
@@ -19,8 +19,6 @@ Go to https://photalabs-web.vercel.app and use it directly with your email!
 
 - UI and animation refinements
 - Mobile-responsive design improvements
-- Better looking sign-in page
-- Real AI image generation with OpenAI DALL-E, Nano Banana or similar
 - Explore section with community generations
 - Image upscaling for download and sharing functionality
 - Character style consistency improvements
@@ -29,7 +27,7 @@ Go to https://photalabs-web.vercel.app and use it directly with your email!
 
 ## Approximate Time Spent
 
-5 hours.
+5 hours + 1 extra hour to redesign the sign-in page and implement real AI image generation with OpenAI DALL-E 3 and Nano Banana Pro (including GPT-4 Vision for character appearance and style analysis).
 
 ## Tech Stack
 
