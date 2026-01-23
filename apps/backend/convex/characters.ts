@@ -2,51 +2,13 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
-// Get all characters for the current user
-export const getByUser = query({
-  args: {},
-  handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) return [];
+const MIN_IMAGES = 3;
+const MAX_IMAGES = 5;
 
-    const characters = await ctx.db
-      .query("characters")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .order("desc")
-      .collect();
-
-    // Resolve image URLs for each character
-    return Promise.all(
-      characters.map(async (character) => ({
-        ...character,
-        imageUrls: await Promise.all(
-          character.imageIds.map((id) => ctx.storage.getUrl(id))
-        ),
-      }))
-    );
-  },
-});
-
-// Get a single character by ID
-export const get = query({
-  args: { id: v.id("characters") },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) return null;
-
-    const character = await ctx.db.get(args.id);
-    if (!character || character.userId !== userId) return null;
-
-    return {
-      ...character,
-      imageUrls: await Promise.all(
-        character.imageIds.map((id) => ctx.storage.getUrl(id))
-      ),
-    };
-  },
-});
-
-// Create a new character
+/**
+ * Create a new character with name and reference images.
+ * Requires 3-5 images for training consistency.
+ */
 export const create = mutation({
   args: {
     name: v.string(),
@@ -54,23 +16,96 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
 
-    // Validate: 3-5 images required
-    if (args.imageIds.length < 3 || args.imageIds.length > 5) {
-      throw new Error("Characters require 3-5 reference images");
+    if (args.imageIds.length < MIN_IMAGES) {
+      throw new Error(
+        `Characters require at least ${MIN_IMAGES} reference images`
+      );
+    }
+    if (args.imageIds.length > MAX_IMAGES) {
+      throw new Error(
+        `Characters can have at most ${MAX_IMAGES} reference images`
+      );
+    }
+
+    const trimmedName = args.name.trim();
+    if (!trimmedName) {
+      throw new Error("Character name is required");
     }
 
     return await ctx.db.insert("characters", {
       userId,
-      name: args.name,
+      name: trimmedName,
       imageIds: args.imageIds,
       createdAt: Date.now(),
     });
   },
 });
 
-// Update a character
+/**
+ * Get a single character by ID.
+ * Returns the character with resolved image URLs.
+ */
+export const get = query({
+  args: { id: v.id("characters") },
+  handler: async (ctx, args) => {
+    const character = await ctx.db.get(args.id);
+    if (!character) {
+      return null;
+    }
+
+    const imageUrls = await Promise.all(
+      character.imageIds.map((id) => ctx.storage.getUrl(id))
+    );
+
+    return {
+      ...character,
+      imageUrls,
+    };
+  },
+});
+
+/**
+ * Get all characters for the current user.
+ * Returns characters sorted by creation date (newest first) with resolved image URLs.
+ */
+export const getByUser = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      return [];
+    }
+
+    const characters = await ctx.db
+      .query("characters")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .order("desc")
+      .collect();
+
+    const charactersWithUrls = await Promise.all(
+      characters.map(async (character) => {
+        const imageUrls = await Promise.all(
+          character.imageIds.map((id) => ctx.storage.getUrl(id))
+        );
+        return {
+          ...character,
+          imageUrls,
+        };
+      })
+    );
+
+    return charactersWithUrls;
+  },
+});
+
+/**
+ * Update an existing character's name and/or images.
+ * Maintains the 3-5 image requirement.
+ */
 export const update = mutation({
   args: {
     id: v.id("characters"),
@@ -79,25 +114,47 @@ export const update = mutation({
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
 
     const character = await ctx.db.get(args.id);
-    if (!character || character.userId !== userId) {
+    if (!character) {
       throw new Error("Character not found");
+    }
+
+    if (character.userId !== userId) {
+      throw new Error("Not authorized to update this character");
     }
 
     const updates: Partial<{ name: string; imageIds: typeof args.imageIds }> =
       {};
 
     if (args.name !== undefined) {
-      updates.name = args.name;
+      const trimmedName = args.name.trim();
+      if (!trimmedName) {
+        throw new Error("Character name is required");
+      }
+      updates.name = trimmedName;
     }
 
     if (args.imageIds !== undefined) {
-      // Validate: 3-5 images required
-      if (args.imageIds.length < 3 || args.imageIds.length > 5) {
-        throw new Error("Characters require 3-5 reference images");
+      if (args.imageIds.length < MIN_IMAGES) {
+        throw new Error(
+          `Characters require at least ${MIN_IMAGES} reference images`
+        );
       }
+      if (args.imageIds.length > MAX_IMAGES) {
+        throw new Error(
+          `Characters can have at most ${MAX_IMAGES} reference images`
+        );
+      }
+
+      const removedImageIds = character.imageIds.filter(
+        (id) => !args.imageIds!.includes(id)
+      );
+      await Promise.all(removedImageIds.map((id) => ctx.storage.delete(id)));
+
       updates.imageIds = args.imageIds;
     }
 
@@ -106,24 +163,69 @@ export const update = mutation({
   },
 });
 
-// Delete a character and its associated images
+/**
+ * Delete a character and all associated images from storage.
+ */
 export const remove = mutation({
   args: { id: v.id("characters") },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
 
     const character = await ctx.db.get(args.id);
-    if (!character || character.userId !== userId) {
+    if (!character) {
       throw new Error("Character not found");
     }
 
-    // Delete all associated images from storage
+    if (character.userId !== userId) {
+      throw new Error("Not authorized to delete this character");
+    }
+
     await Promise.all(
-      character.imageIds.map((imageId) => ctx.storage.delete(imageId))
+      character.imageIds.map((id) => ctx.storage.delete(id))
     );
 
-    // Delete the character
     await ctx.db.delete(args.id);
+  },
+});
+
+/**
+ * Search characters by name for @ mention suggestions.
+ * Returns characters matching the search query.
+ */
+export const search = query({
+  args: { query: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      return [];
+    }
+
+    const characters = await ctx.db
+      .query("characters")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+
+    const searchLower = args.query.toLowerCase();
+    const filtered = characters.filter((c) =>
+      c.name.toLowerCase().includes(searchLower)
+    );
+
+    const results = await Promise.all(
+      filtered.map(async (character) => {
+        const avatarUrl = character.imageIds[0]
+          ? await ctx.storage.getUrl(character.imageIds[0])
+          : null;
+        return {
+          _id: character._id,
+          name: character.name,
+          avatarUrl,
+        };
+      })
+    );
+
+    return results;
   },
 });

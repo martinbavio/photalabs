@@ -2,16 +2,25 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
-// Generate upload URL - call this before uploading
+/**
+ * Generate an upload URL for client-side file uploads.
+ * The URL is valid for a short period and can be used to POST a file directly to Convex storage.
+ */
 export const generateUploadUrl = mutation({
+  args: {},
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
     return await ctx.storage.generateUploadUrl();
   },
 });
 
-// Get displayable URL from storage ID
+/**
+ * Get a displayable URL from a storage ID.
+ * Note: URLs are time-limited (~1 hour), so always resolve at read time.
+ */
 export const getUrl = query({
   args: { storageId: v.id("_storage") },
   handler: async (ctx, args) => {
@@ -19,7 +28,10 @@ export const getUrl = query({
   },
 });
 
-// Get multiple URLs at once (for character images)
+/**
+ * Get multiple displayable URLs at once (for character images).
+ * Returns an array of URLs in the same order as the input storage IDs.
+ */
 export const getUrls = query({
   args: { storageIds: v.array(v.id("_storage")) },
   handler: async (ctx, args) => {
@@ -29,12 +41,28 @@ export const getUrls = query({
   },
 });
 
-// Delete file from storage
+/**
+ * Delete a file from storage.
+ * Verifies that the file either belongs to a character owned by the user,
+ * or is not yet associated with any character (pending upload).
+ */
 export const deleteFile = mutation({
   args: { storageId: v.id("_storage") },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
+
+    const characters = await ctx.db.query("characters").collect();
+    const owningCharacter = characters.find((c) =>
+      c.imageIds.includes(args.storageId)
+    );
+
+    if (owningCharacter && owningCharacter.userId !== userId) {
+      throw new Error("Not authorized to delete this file");
+    }
+
     await ctx.storage.delete(args.storageId);
   },
 });
