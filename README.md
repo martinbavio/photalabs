@@ -27,6 +27,10 @@ Go to https://photalabs-web.vercel.app and use it directly with your email!
 - Pagination for history page
 - Search functionality for characters and history
 
+## Approximate Time Spent
+
+5 hours.
+
 ## Tech Stack
 
 - **Frontend**: Next.js 15 (App Router) + React 19

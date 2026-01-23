@@ -4,7 +4,8 @@ import { convexAuth } from "@convex-dev/auth/server";
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   providers: [
     Resend({
-      sendVerificationRequest: async ({ identifier: email, url, provider }) => {
+      from: "hi@martinbavio.com",
+      sendVerificationRequest: async ({ identifier: email, url }) => {
         const res = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: {
@@ -12,7 +13,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            from: provider.from,
+            from: "hi@martinbavio.com",
             to: email,
             subject: "Sign in to Photalabs",
             html: `<p>Click the link below to sign in:</p><p><a href="${url}">Sign in to Photalabs</a></p>`,
