@@ -26,6 +26,8 @@ export default function CreatePage() {
     removeReferenceImage,
     generatedImageUrl,
     isGenerating,
+    model,
+    setModel,
     generate,
     reset,
     restore,
@@ -58,7 +60,9 @@ export default function CreatePage() {
       characterName: string;
     }>;
     referenceImageId?: Id<"_storage">;
-    generatedImageUrl: string;
+    // Legacy records have generatedImageUrl, new records have generatedImageId
+    generatedImageId?: Id<"_storage">;
+    generatedImageUrl: string | null;
   }) => {
     restore(generation);
     setHistoryOpen(false);
@@ -106,6 +110,8 @@ export default function CreatePage() {
           onGenerate={generate}
           onReset={reset}
           isGenerating={isGenerating}
+          model={model}
+          onModelChange={setModel}
         />
 
         <ResultPanel imageUrl={generatedImageUrl} isLoading={isGenerating} />

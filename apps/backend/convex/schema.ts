@@ -26,7 +26,13 @@ export default defineSchema({
       })
     ),
     referenceImageId: v.optional(v.id("_storage")),
-    generatedImageUrl: v.string(),
+    // Legacy: old records have generatedImageUrl (external picsum URL)
+    // New: DALL-E records have generatedImageId (Convex storage)
+    generatedImageUrl: v.optional(v.string()),
+    generatedImageId: v.optional(v.id("_storage")),
+    // Model used for generation (optional for backward compatibility)
+    // "dall-e-3" or "nano-banana-pro"
+    model: v.optional(v.union(v.literal("dall-e-3"), v.literal("nano-banana-pro"))),
     createdAt: v.number(),
   }).index("by_user", ["userId"]),
 });

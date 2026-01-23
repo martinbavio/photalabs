@@ -6,7 +6,7 @@ import { cn } from "@/shared/utils/cn";
 
 interface HistoryItemProps {
   id: Id<"generations">;
-  imageUrl: string;
+  imageUrl: string | null;
   prompt: string;
   characterMentions: Array<{
     characterId: Id<"characters">;
@@ -66,12 +66,18 @@ export function HistoryItem({
     >
       {/* Thumbnail */}
       <div className="w-14 h-14 rounded-[8px] overflow-hidden flex-shrink-0 bg-bg-input">
-        <img
-          src={imageUrl}
-          alt={prompt}
-          className="w-full h-full object-cover"
-          loading="lazy"
-        />
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={prompt}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <span className="text-text-muted text-xs">N/A</span>
+          </div>
+        )}
       </div>
 
       {/* Content */}
