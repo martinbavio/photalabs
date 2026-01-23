@@ -1,16 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowDownAZ, ChevronDown } from "lucide-react";
 import { HistoryGrid, useHistory } from "@/features/history";
 import { Generation } from "@/features/history";
 import { cn } from "@/shared/utils/cn";
 
+type SortOrder = "desc" | "asc";
+
 export default function HistoryPage() {
   const router = useRouter();
   const { generations, isLoading, totalCount } = useHistory();
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+
+  const sortedGenerations = useMemo(() => {
+    if (sortOrder === "desc") {
+      // Already sorted desc from backend, but ensure consistency
+      return [...generations].sort((a, b) => b.createdAt - a.createdAt);
+    }
+    return [...generations].sort((a, b) => a.createdAt - b.createdAt);
+  }, [generations, sortOrder]);
 
   const handleSelectGeneration = (generation: Generation) => {
     // Navigate to editor with generation data via URL params
@@ -45,7 +56,7 @@ export default function HistoryPage() {
             )}
           >
             <ArrowDownAZ className="h-[18px] w-[18px]" />
-            <span>Recent</span>
+            <span>{sortOrder === "desc" ? "Recent" : "Oldest"}</span>
             <ChevronDown className="h-4 w-4 text-text-placeholder" />
           </button>
 
@@ -58,14 +69,26 @@ export default function HistoryPage() {
               />
               <div className="absolute right-0 top-full mt-2 z-20 bg-bg-panel border border-border rounded-[12px] py-1 min-w-[140px] shadow-lg">
                 <button
-                  onClick={() => setSortMenuOpen(false)}
-                  className="w-full px-4 py-2.5 text-left text-sm text-text-primary hover:bg-border transition-colors"
+                  onClick={() => {
+                    setSortOrder("desc");
+                    setSortMenuOpen(false);
+                  }}
+                  className={cn(
+                    "w-full px-4 py-2.5 text-left text-sm hover:bg-border transition-colors",
+                    sortOrder === "desc" ? "text-text-primary" : "text-text-muted"
+                  )}
                 >
                   Most Recent
                 </button>
                 <button
-                  onClick={() => setSortMenuOpen(false)}
-                  className="w-full px-4 py-2.5 text-left text-sm text-text-muted hover:bg-border transition-colors"
+                  onClick={() => {
+                    setSortOrder("asc");
+                    setSortMenuOpen(false);
+                  }}
+                  className={cn(
+                    "w-full px-4 py-2.5 text-left text-sm hover:bg-border transition-colors",
+                    sortOrder === "asc" ? "text-text-primary" : "text-text-muted"
+                  )}
                 >
                   Oldest First
                 </button>
@@ -78,7 +101,7 @@ export default function HistoryPage() {
       {/* Image Grid */}
       <div className="flex-1 overflow-auto">
         <HistoryGrid
-          generations={generations}
+          generations={sortedGenerations}
           onSelect={handleSelectGeneration}
           isLoading={isLoading}
         />
