@@ -205,6 +205,27 @@ test.describe("Editor - Generation Flow", () => {
     await page.goto("/create");
   });
 
+  test("keyboard shortcut triggers generation", async ({ page }) => {
+    const textarea = page.getByPlaceholder(/describe the image/i);
+    await textarea.fill("A foggy forest at sunrise");
+    await textarea.press("Control+Enter");
+
+    await expect(
+      page.getByText(/^Generating$|^Complete$/)
+    ).toBeVisible({ timeout: 10000 });
+  });
+
+  test("keyboard shortcut does not generate when prompt is empty", async ({ page }) => {
+    const textarea = page.getByPlaceholder(/describe the image/i);
+    await expect(page.getByText("Ready")).toBeVisible();
+
+    await textarea.press("Control+Enter");
+    await page.waitForTimeout(300);
+
+    await expect(page.getByText("Ready")).toBeVisible();
+    await expect(page.getByText("Generating")).toHaveCount(0);
+  });
+
   test("clicking generate with prompt triggers generation", async ({ page }) => {
     const textarea = page.getByPlaceholder(/describe the image/i);
     await textarea.fill("A beautiful sunset over mountains");

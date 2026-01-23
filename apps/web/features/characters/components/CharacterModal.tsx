@@ -7,6 +7,7 @@ import { Id } from "@photalabs/backend/convex/_generated/dataModel";
 import { X, Check, Lightbulb, Loader2 } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import { ImageSlot } from "./ImageSlot";
+import { showToast } from "@/shared/hooks/useToast";
 
 interface CharacterModalProps {
   isOpen: boolean;
@@ -120,11 +121,13 @@ export function CharacterModal({
   const handleSave = useCallback(async () => {
     if (imageIds.length < MIN_IMAGES) {
       setError(`Please upload at least ${MIN_IMAGES} images`);
+      showToast.error(`Please upload at least ${MIN_IMAGES} images`);
       return;
     }
 
     if (!name.trim()) {
       setError("Please enter a character name");
+      showToast.error("Please enter a character name");
       return;
     }
 
@@ -138,16 +141,20 @@ export function CharacterModal({
           name: name.trim(),
           imageIds,
         });
+        showToast.success("Character updated successfully!");
       } else {
         await createCharacter({
           name: name.trim(),
           imageIds,
         });
+        showToast.success("Character created successfully!");
       }
       onSuccess?.();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save character");
+      const errorMessage = err instanceof Error ? err.message : "Failed to save character";
+      setError(errorMessage);
+      showToast.error(errorMessage);
       // Clean up newly uploaded images on failure to prevent orphans
       if (newlyUploadedIds.size > 0) {
         await Promise.allSettled(

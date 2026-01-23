@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Id } from "@photalabs/backend/convex/_generated/dataModel";
 import { CharacterGrid, CharacterModal, useCharacters } from "@/features/characters";
+import { CharacterGridSkeleton } from "@/shared/components/Skeleton";
 
 export default function CharactersPage() {
   const { characters, isLoading, handleDelete } = useCharacters();
@@ -50,9 +51,7 @@ export default function CharactersPage() {
 
       {/* Content */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 text-text-muted animate-spin" />
-        </div>
+        <CharacterGridSkeleton count={4} />
       ) : (
         <CharacterGrid
           characters={characters}

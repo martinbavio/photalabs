@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "@/features/auth";
 import { Sidebar } from "@/features/layout";
+import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
 
 export default function AuthenticatedLayout({
   children,
@@ -34,7 +35,9 @@ export default function AuthenticatedLayout({
   return (
     <div className="flex min-h-screen bg-bg-primary">
       <Sidebar />
-      <main className="flex-1 overflow-auto">{children}</main>
+      <main className="flex-1 overflow-auto">
+        <ErrorBoundary>{children}</ErrorBoundary>
+      </main>
     </div>
   );
 }

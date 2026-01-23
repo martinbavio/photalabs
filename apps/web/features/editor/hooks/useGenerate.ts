@@ -5,6 +5,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@photalabs/backend/convex/_generated/api";
 import { Id } from "@photalabs/backend/convex/_generated/dataModel";
 import { Character } from "../components/CharacterMentionDropdown";
+import { showToast } from "@/shared/hooks/useToast";
 
 interface GenerateState {
   prompt: string;
@@ -72,7 +73,10 @@ export function useGenerate() {
   }, []);
 
   const generate = useCallback(async () => {
-    if (!state.prompt.trim()) return;
+    if (!state.prompt.trim()) {
+      showToast.error("Please enter a prompt");
+      return;
+    }
 
     setState((prev) => ({ ...prev, isGenerating: true }));
 
@@ -114,8 +118,12 @@ export function useGenerate() {
         generatedImageUrl,
         isGenerating: false,
       }));
+
+      showToast.success("Image generated successfully!");
     } catch (error) {
       console.error("Generation failed:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to generate image";
+      showToast.error(errorMessage);
       setState((prev) => ({ ...prev, isGenerating: false }));
     }
   }, [state.prompt, state.mentionedCharacters, state.referenceImageId, createGeneration]);

@@ -20,6 +20,8 @@ interface PromptInputProps {
   onChange: (value: string) => void;
   characters: Character[];
   onMentionAdd: (character: Character) => void;
+  onGenerate?: () => void;
+  isGenerating?: boolean;
   placeholder?: string;
 }
 
@@ -28,6 +30,8 @@ export function PromptInput({
   onChange,
   characters,
   onMentionAdd,
+  onGenerate,
+  isGenerating,
   placeholder = "Describe the image you want to create...\n\nUse @name to mention characters (e.g., @Sarah walking in a park at sunset)",
 }: PromptInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -84,15 +88,24 @@ export function PromptInput({
     [onChange]
   );
 
-  // Handle keyboard navigation in dropdown
+  // Handle keyboard navigation in dropdown and shortcuts
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
+      // Cmd/Ctrl + Enter to generate
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        e.preventDefault();
+        if (onGenerate && !isGenerating && value.trim()) {
+          onGenerate();
+        }
+        return;
+      }
+
       if (showDropdown && e.key === "Escape") {
         setShowDropdown(false);
         setMentionStartIndex(null);
       }
     },
-    [showDropdown]
+    [showDropdown, onGenerate, isGenerating, value]
   );
 
   // Handle character selection from dropdown
