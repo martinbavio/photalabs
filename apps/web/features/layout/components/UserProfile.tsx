@@ -3,8 +3,6 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { LogOut } from "lucide-react";
 import { useAuth } from "@/features/auth";
-import { cn } from "@/shared/utils/cn";
-
 export function UserProfile() {
   const { user } = useAuth();
   const { signOut } = useAuthActions();
@@ -19,11 +17,7 @@ export function UserProfile() {
 
   return (
     <div
-      className="flex items-center gap-3 px-4 py-3.5 rounded-[var(--radius-button)] bg-[#1A1A1E] border border-border group cursor-pointer"
-      onClick={() => signOut()}
-      role="button"
-      tabIndex={0}
-      title="Click to sign out"
+      className="flex items-center gap-3 px-4 py-3.5 rounded-[var(--radius-button)] bg-[#1A1A1E] border border-border group"
     >
       {/* Avatar */}
       <div className="w-10 h-10 rounded-full bg-[#4D65FF] flex items-center justify-center text-white text-[13px] font-bold shrink-0">
@@ -39,7 +33,15 @@ export function UserProfile() {
       </div>
 
       {/* Logout icon - shows on hover */}
-      <LogOut className="w-4 h-4 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+      <button
+        type="button"
+        onClick={() => signOut()}
+        className="ml-auto p-1.5 rounded-lg text-text-muted opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity hover:text-text-primary hover:bg-bg-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-yellow/50 shrink-0"
+        aria-label="Sign out"
+        title="Sign out"
+      >
+        <LogOut className="w-4 h-4" />
+      </button>
     </div>
   );
 }

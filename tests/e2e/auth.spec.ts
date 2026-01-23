@@ -1,16 +1,32 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, Page } from "@playwright/test";
 
 // Helper to disable E2E auth bypass (to test unauthenticated flows)
-async function disableE2EAuth(page: ReturnType<typeof test["info"]>["page"]) {
+async function disableE2EAuth(page: Page, baseURL?: string) {
+  const resolvedBaseURL = baseURL || "http://localhost:3000";
+  const url = new URL(resolvedBaseURL);
+
+  await page.context().addCookies([
+    {
+      name: "e2e_auth_disabled",
+      value: "true",
+      domain: url.hostname,
+      path: "/",
+    },
+  ]);
+
   await page.addInitScript(() => {
     window.localStorage.setItem("e2e_auth_disabled", "true");
+    document.cookie = "e2e_auth_disabled=true; path=/";
   });
 }
 
 test.describe("Authentication", () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }, testInfo) => {
     // Disable E2E auth bypass to test login and redirect behavior
-    await disableE2EAuth(page);
+    await disableE2EAuth(
+      page,
+      testInfo.project.use.baseURL as string | undefined
+    );
   });
 
   test("login page renders with dark theme", async ({ page }) => {
