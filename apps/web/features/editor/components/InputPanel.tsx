@@ -91,7 +91,13 @@ export function InputPanel({
           <span className="text-[13px] font-semibold text-text-primary">
             Reference Image (optional)
           </span>
-          <Info className="h-3.5 w-3.5 text-text-placeholder" />
+          <div className="relative group">
+            <Info className="h-3.5 w-3.5 text-text-placeholder cursor-help" />
+            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-bg-primary border border-border rounded-lg text-xs text-text-muted whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+              Upload an image to guide the style or composition of the generated image.
+              <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-border" />
+            </div>
+          </div>
         </div>
 
         <ReferenceImageUpload

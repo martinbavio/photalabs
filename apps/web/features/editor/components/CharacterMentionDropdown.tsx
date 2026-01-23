@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Id } from "@photalabs/backend/convex/_generated/dataModel";
 import { cn } from "@/shared/utils/cn";
 
@@ -26,11 +26,17 @@ export function CharacterMentionDropdown({
   position,
 }: CharacterMentionDropdownProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
 
   // Filter characters by search term
   const filteredCharacters = characters.filter((char) =>
     char.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Reset highlighted index when filtered results change
+  useEffect(() => {
+    setHighlightedIndex(0);
+  }, [searchTerm]);
 
   // Close on click outside
   useEffect(() => {
@@ -47,17 +53,35 @@ export function CharacterMentionDropdown({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [onClose]);
 
-  // Close on escape
+  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         onClose();
+        return;
+      }
+
+      if (filteredCharacters.length === 0) return;
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setHighlightedIndex((prev) =>
+          prev < filteredCharacters.length - 1 ? prev + 1 : 0
+        );
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setHighlightedIndex((prev) =>
+          prev > 0 ? prev - 1 : filteredCharacters.length - 1
+        );
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        onSelect(filteredCharacters[highlightedIndex]);
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  }, [onClose, filteredCharacters, highlightedIndex, onSelect]);
 
   if (filteredCharacters.length === 0) {
     return (
@@ -81,14 +105,16 @@ export function CharacterMentionDropdown({
       style={{ top: position.top, left: position.left }}
       className="absolute z-50 w-64 bg-bg-panel border border-border rounded-[12px] p-2 shadow-lg max-h-48 overflow-y-auto"
     >
-      {filteredCharacters.map((character) => (
+      {filteredCharacters.map((character, index) => (
         <button
           key={character._id}
           onClick={() => onSelect(character)}
+          onMouseEnter={() => setHighlightedIndex(index)}
           className={cn(
             "w-full flex items-center gap-3 px-3 py-2 rounded-lg",
             "text-left text-sm text-text-primary",
-            "hover:bg-border transition-colors"
+            "hover:bg-border transition-colors",
+            highlightedIndex === index && "bg-border"
           )}
         >
           {character.imageUrls[0] ? (

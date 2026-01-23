@@ -27,7 +27,6 @@ export function CharacterModal({
 }: CharacterModalProps) {
   const [name, setName] = useState("");
   const [imageIds, setImageIds] = useState<Id<"_storage">[]>([]);
-  const [imageUrls, setImageUrls] = useState<(string | null)[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Track newly uploaded images during this session (for cleanup on failure)
@@ -43,6 +42,12 @@ export function CharacterModal({
     characterId ? { id: characterId } : "skip"
   );
 
+  // Resolve storage IDs to URLs
+  const imageUrls = useQuery(
+    api.storage.getUrls,
+    imageIds.length > 0 ? { storageIds: imageIds } : "skip"
+  );
+
   // Mutations
   const createCharacter = useMutation(api.characters.create);
   const updateCharacter = useMutation(api.characters.update);
@@ -53,12 +58,10 @@ export function CharacterModal({
     if (isEditMode && character) {
       setName(character.name);
       setImageIds(character.imageIds);
-      setImageUrls(character.imageUrls);
     } else if (!isEditMode) {
       // Reset form for create mode
       setName("");
       setImageIds([]);
-      setImageUrls([]);
     }
   }, [isEditMode, character]);
 
@@ -69,11 +72,24 @@ export function CharacterModal({
       if (!isEditMode) {
         setName("");
         setImageIds([]);
-        setImageUrls([]);
       }
       setNewlyUploadedIds(new Set());
     }
   }, [isOpen, isEditMode]);
+
+  // Handle ESC key to close modal
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !isSaving) {
+        onClose();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, isSaving, onClose]);
 
   const handleImageUpload = useCallback(
     (storageId: Id<"_storage">, index: number) => {
@@ -81,12 +97,6 @@ export function CharacterModal({
         const newIds = [...prev];
         newIds[index] = storageId;
         return newIds.filter(Boolean);
-      });
-      // Temporary URL will be resolved by re-fetching
-      setImageUrls((prev) => {
-        const newUrls = [...prev];
-        newUrls[index] = "uploading"; // Placeholder
-        return newUrls;
       });
       // Track this as a newly uploaded image
       setNewlyUploadedIds((prev) => new Set(prev).add(storageId));
@@ -99,7 +109,6 @@ export function CharacterModal({
       const storageIdToRemove = imageIds[index];
 
       setImageIds((prev) => prev.filter((_, i) => i !== index));
-      setImageUrls((prev) => prev.filter((_, i) => i !== index));
 
       // Delete from storage if this is a newly uploaded file (not from the original character)
       if (storageIdToRemove && newlyUploadedIds.has(storageIdToRemove)) {
@@ -166,9 +175,6 @@ export function CharacterModal({
         setImageIds((prev) =>
           prev.filter((id) => !newlyUploadedIds.has(id))
         );
-        setImageUrls((prev) =>
-          prev.filter((_, i) => imageIds[i] && !newlyUploadedIds.has(imageIds[i]))
-        );
       }
     } finally {
       setIsSaving(false);
@@ -205,7 +211,7 @@ export function CharacterModal({
       />
 
       {/* Modal */}
-      <div className="relative w-[540px] max-h-[90vh] overflow-y-auto bg-bg-panel rounded-[22px] border border-border p-[30px] flex flex-col gap-[26px]">
+      <div className="relative w-[580px] max-h-[90vh] overflow-y-auto bg-bg-panel rounded-[22px] border border-border p-[30px] flex flex-col gap-[26px]">
         {/* Header */}
         <div className="flex items-center justify-between">
           <h2 className="text-[22px] font-semibold text-text-primary font-[family-name:var(--font-heading)]">
@@ -222,7 +228,7 @@ export function CharacterModal({
         </div>
 
         {/* Description */}
-        <p className="text-sm text-text-muted w-[480px]">
+        <p className="text-sm text-text-muted">
           Create a character by uploading 3-5 reference images. These will be
           used to generate consistent images of this character.
         </p>
@@ -265,7 +271,7 @@ export function CharacterModal({
             {Array.from({ length: MAX_IMAGES }).map((_, index) => (
               <ImageSlot
                 key={index}
-                imageUrl={imageUrls[index]}
+                imageUrl={imageUrls?.[index]}
                 onUpload={(storageId) => handleImageUpload(storageId, index)}
                 onRemove={
                   imageIds[index] ? () => handleImageRemove(index) : undefined
