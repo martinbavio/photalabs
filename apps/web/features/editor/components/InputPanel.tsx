@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { LayoutDashboard, ChevronDown, Info } from "lucide-react";
 import { PromptInput } from "./PromptInput";
 import { ReferenceImageUpload } from "./ReferenceImageUpload";
@@ -35,6 +36,16 @@ export function InputPanel({
   onReset,
   isGenerating,
 }: InputPanelProps) {
+  const [modifierLabel, setModifierLabel] = useState("Cmd/Ctrl");
+
+  useEffect(() => {
+    const platform =
+      (navigator as { userAgentData?: { platform?: string } }).userAgentData
+        ?.platform ?? navigator.platform ?? "";
+    const isApple = /Mac|iPhone|iPad|iPod/i.test(platform);
+    setModifierLabel(isApple ? "⌘" : "Ctrl");
+  }, []);
+
   return (
     <div
       className={cn(
@@ -114,7 +125,15 @@ export function InputPanel({
           />
         </div>
         <p className="text-xs text-text-placeholder">
-          Press <kbd className="px-1.5 py-0.5 bg-border rounded text-text-muted">⌘</kbd> + <kbd className="px-1.5 py-0.5 bg-border rounded text-text-muted">Enter</kbd> to generate
+          Press{" "}
+          <kbd className="px-1.5 py-0.5 bg-border rounded text-text-muted">
+            {modifierLabel}
+          </kbd>{" "}
+          +{" "}
+          <kbd className="px-1.5 py-0.5 bg-border rounded text-text-muted">
+            Enter
+          </kbd>{" "}
+          to generate
         </p>
       </div>
     </div>
