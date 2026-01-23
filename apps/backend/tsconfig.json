@@ -16,5 +16,5 @@
     "incremental": true
   },
   "include": ["convex/**/*.ts", "convex/**/*.tsx"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "convex/test.setup.ts", "convex/**/*.test.ts"]
 }
