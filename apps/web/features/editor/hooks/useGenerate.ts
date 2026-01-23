@@ -21,6 +21,7 @@ interface GenerateState {
   referenceImageId: Id<"_storage"> | null;
   referenceImageUrl: string | null;
   generatedImageId: Id<"_storage"> | null;
+  generatedImageUrl: string | null;
   isGenerating: boolean;
   model: ImageModel;
 }
@@ -37,6 +38,7 @@ export function useGenerate() {
     referenceImageId: null,
     referenceImageUrl: null,
     generatedImageId: null,
+    generatedImageUrl: null,
     isGenerating: false,
     model: "dall-e-3",
   });
@@ -131,6 +133,7 @@ export function useGenerate() {
       setState((prev) => ({
         ...prev,
         generatedImageId: result.generatedImageId,
+        generatedImageUrl: null,
         isGenerating: false,
       }));
 
@@ -150,6 +153,7 @@ export function useGenerate() {
       referenceImageId: null,
       referenceImageUrl: null,
       generatedImageId: null,
+      generatedImageUrl: null,
       isGenerating: false,
       model: "dall-e-3",
     });
@@ -192,6 +196,7 @@ export function useGenerate() {
       // Legacy records have generatedImageUrl, new records have generatedImageId
       generatedImageId?: Id<"_storage">;
       generatedImageUrl: string | null; // Resolved URL from query
+      model?: ImageModel;
     }) => {
       const mentions = generation.characterMentions ?? [];
       const mentionedChars: Character[] = hasCharactersLoaded
@@ -208,7 +213,9 @@ export function useGenerate() {
         referenceImageId: generation.referenceImageId ?? null,
         referenceImageUrl: null, // Will be resolved by query
         generatedImageId: generation.generatedImageId ?? null,
+        generatedImageUrl: generation.generatedImageUrl ?? null,
         isGenerating: false,
+        model: generation.model ?? "dall-e-3",
       });
     },
     [hasCharactersLoaded, resolveMentions]
@@ -220,7 +227,7 @@ export function useGenerate() {
     mentionedCharacters: state.mentionedCharacters,
     referenceImageId: state.referenceImageId,
     referenceImageUrl: referenceImageUrlQuery ?? null,
-    generatedImageUrl: generatedImageUrlQuery ?? null,
+    generatedImageUrl: generatedImageUrlQuery ?? state.generatedImageUrl ?? null,
     isGenerating: state.isGenerating,
     model: state.model,
     characters,

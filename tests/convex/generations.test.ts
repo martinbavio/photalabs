@@ -28,6 +28,7 @@ describe("generations", () => {
           prompt: "A beautiful sunset",
           characterMentions: [],
           generatedImageId,
+          model: "dall-e-3",
         }
       );
 
@@ -83,6 +84,7 @@ describe("generations", () => {
             },
           ],
           generatedImageId,
+          model: "dall-e-3",
         }
       );
 
