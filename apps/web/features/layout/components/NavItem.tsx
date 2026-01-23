@@ -13,7 +13,13 @@ interface NavItemProps {
   disabled?: boolean;
 }
 
-export function NavItem({ href, icon: Icon, label, badge, disabled }: NavItemProps) {
+export function NavItem({
+  href,
+  icon: Icon,
+  label,
+  badge,
+  disabled,
+}: NavItemProps) {
   const pathname = usePathname();
   const isActive = pathname === href;
 
@@ -21,14 +27,16 @@ export function NavItem({ href, icon: Icon, label, badge, disabled }: NavItemPro
     return (
       <div
         className={cn(
-          "flex items-center gap-3 px-4 py-3 rounded-[var(--radius-button)]",
-          "text-text-muted cursor-not-allowed opacity-60"
+          "flex items-center justify-between px-4 py-3.5 rounded-[var(--radius-button)]",
+          "text-text-muted cursor-not-allowed opacity-50"
         )}
       >
-        <Icon className="w-5 h-5" />
-        <span className="text-sm font-medium">{label}</span>
+        <div className="flex items-center gap-3">
+          <Icon className="w-5 h-5" strokeWidth={2} />
+          <span className="text-sm font-medium">{label}</span>
+        </div>
         {badge && (
-          <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-bg-input text-text-muted border border-border">
+          <span className="text-[10px] font-semibold px-2.5 py-1 rounded-lg bg-border text-text-muted">
             {badge}
           </span>
         )}
@@ -40,26 +48,14 @@ export function NavItem({ href, icon: Icon, label, badge, disabled }: NavItemPro
     <Link
       href={href}
       className={cn(
-        "flex items-center gap-3 px-4 py-3 rounded-[var(--radius-button)] transition-colors",
+        "flex items-center gap-3 px-4 py-3.5 rounded-[var(--radius-button)] transition-colors",
         isActive
-          ? "bg-accent-yellow text-bg-primary"
-          : "text-text-muted hover:bg-bg-input hover:text-text-primary"
+          ? "bg-accent-yellow text-bg-primary font-semibold"
+          : "text-text-muted hover:bg-bg-input hover:text-text-primary font-medium"
       )}
     >
-      <Icon className="w-5 h-5" />
-      <span className="text-sm font-medium">{label}</span>
-      {badge && (
-        <span
-          className={cn(
-            "ml-auto text-xs px-2 py-0.5 rounded-full",
-            isActive
-              ? "bg-bg-primary/20 text-bg-primary"
-              : "bg-bg-input text-text-muted border border-border"
-          )}
-        >
-          {badge}
-        </span>
-      )}
+      <Icon className="w-5 h-5" strokeWidth={2} />
+      <span className="text-sm">{label}</span>
     </Link>
   );
 }
