@@ -7,6 +7,11 @@ export default defineSchema({
   // Note: Do NOT redefine the users table - authTables handles it.
   // User profile data is stored in the 'users' table managed by Convex Auth.
 
+  userCredits: defineTable({
+    userId: v.id("users"),
+    credits: v.number(), // Number of image generation credits remaining
+  }).index("by_user", ["userId"]),
+
   characters: defineTable({
     userId: v.id("users"),
     name: v.string(),

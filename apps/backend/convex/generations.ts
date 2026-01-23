@@ -94,6 +94,12 @@ export const generate = action({
     const userId = await ctx.runQuery(internal.generations.getCurrentUserId);
     if (!userId) throw new Error("Not authenticated");
 
+    // Check if user has credits remaining
+    const credits = await ctx.runQuery(internal.users.getUserCredits, { userId });
+    if (credits <= 0) {
+      throw new Error("No credits remaining. You have used all your image generation credits.");
+    }
+
     const model: ModelType = args.model ?? "dall-e-3";
 
     // Validate API keys
@@ -261,6 +267,9 @@ export const generate = action({
       generatedImageId,
       model,
     });
+
+    // Deduct one credit after successful generation
+    await ctx.runMutation(internal.users.deductCredit, { userId });
 
     return { generationId, generatedImageId };
   },

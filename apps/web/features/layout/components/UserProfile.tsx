@@ -29,7 +29,7 @@ export function UserProfile() {
         <p className="text-[13px] font-semibold text-text-primary truncate">
           {displayName}
         </p>
-        <p className="text-[11px] text-text-muted">25 credits left</p>
+        <p className="text-[11px] text-text-muted">{user?.credits ?? 0} credits left</p>
       </div>
 
       {/* Logout icon - shows on hover */}
