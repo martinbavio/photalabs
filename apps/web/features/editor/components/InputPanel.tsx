@@ -70,6 +70,8 @@ export function InputPanel({
         onChange={onPromptChange}
         characters={characters}
         onMentionAdd={onMentionAdd}
+        onGenerate={onGenerate}
+        isGenerating={isGenerating}
       />
 
       {/* Reference Image Section */}
@@ -90,25 +92,30 @@ export function InputPanel({
       </div>
 
       {/* Button Section */}
-      <div className="flex items-center gap-3.5 mt-auto">
-        <button
-          onClick={onReset}
-          className={cn(
-            "px-6 py-3.5",
-            "bg-[#1A1A1E] rounded-[12px]",
-            "border border-border",
-            "text-text-muted text-sm font-medium",
-            "hover:bg-border transition-colors"
-          )}
-        >
-          Reset
-        </button>
+      <div className="flex flex-col gap-2 mt-auto">
+        <div className="flex items-center gap-3.5">
+          <button
+            onClick={onReset}
+            className={cn(
+              "px-6 py-3.5",
+              "bg-[#1A1A1E] rounded-[12px]",
+              "border border-border",
+              "text-text-muted text-sm font-medium",
+              "hover:bg-border transition-colors"
+            )}
+          >
+            Reset
+          </button>
 
-        <GenerateButton
-          onClick={onGenerate}
-          isLoading={isGenerating}
-          disabled={!prompt.trim()}
-        />
+          <GenerateButton
+            onClick={onGenerate}
+            isLoading={isGenerating}
+            disabled={!prompt.trim()}
+          />
+        </div>
+        <p className="text-xs text-text-placeholder">
+          Press <kbd className="px-1.5 py-0.5 bg-border rounded text-text-muted">⌘</kbd> + <kbd className="px-1.5 py-0.5 bg-border rounded text-text-muted">Enter</kbd> to generate
+        </p>
       </div>
     </div>
   );

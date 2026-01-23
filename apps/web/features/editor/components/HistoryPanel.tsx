@@ -7,6 +7,7 @@ import { api } from "@photalabs/backend/convex/_generated/api";
 import { Id } from "@photalabs/backend/convex/_generated/dataModel";
 import { HistoryItem } from "./HistoryItem";
 import { cn } from "@/shared/utils/cn";
+import { HistoryPanelSkeleton } from "@/shared/components/Skeleton";
 
 interface Generation {
   _id: Id<"generations">;
@@ -34,7 +35,9 @@ export function HistoryPanel({
   onSelect,
   selectedId,
 }: HistoryPanelProps) {
-  const generations = useQuery(api.generations.getRecent, { limit: 20 }) ?? [];
+  const generationsQuery = useQuery(api.generations.getRecent, { limit: 20 });
+  const isLoading = generationsQuery === undefined;
+  const generations = generationsQuery ?? [];
 
   // Close on Escape key
   useEffect(() => {
@@ -86,7 +89,9 @@ export function HistoryPanel({
 
         {/* Content */}
         <div className="flex-1 overflow-auto p-4">
-          {generations.length === 0 ? (
+          {isLoading ? (
+            <HistoryPanelSkeleton count={5} />
+          ) : generations.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center py-12">
               <div className="w-14 h-14 rounded-full bg-bg-input border border-border flex items-center justify-center mb-4">
                 <ImageIcon className="w-6 h-6 text-text-muted" />

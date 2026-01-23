@@ -9,7 +9,18 @@ A mini AI image editing playground with mock image generation, character managem
 - **Styling**: Tailwind CSS v4
 - **Testing**: Vitest (unit tests for Convex), Playwright (E2E)
 - **Icons**: Lucide React
+- **Notifications**: Sonner
 - **Monorepo**: Turborepo + pnpm workspaces
+
+## Features
+
+- **Magic Link Authentication**: Passwordless login via email magic links (Resend)
+- **Character Management**: Create, edit, and delete AI characters with 3-5 reference images
+- **Image Generation**: Generate images with prompts and @character mentions
+- **Reference Images**: Upload reference images to guide generation
+- **Generation History**: View past generations, restore to editor
+- **Real-time Updates**: Live data sync powered by Convex
+- **Dark Theme**: Beautiful dark UI matching Pencil designs
 
 ## Getting Started
 
@@ -69,20 +80,31 @@ photalabs/
 │   │   │   ├── layout.tsx        # Root layout with providers
 │   │   │   ├── page.tsx          # Login page
 │   │   │   └── (authenticated)/  # Protected routes
+│   │   │       ├── create/       # Image editor
+│   │   │       ├── history/      # Generation history
+│   │   │       └── characters/   # Character management
 │   │   ├── features/             # Feature-based organization
-│   │   │   ├── auth/             # Authentication feature
-│   │   │   └── layout/           # Layout feature (sidebar, nav)
+│   │   │   ├── auth/             # Authentication
+│   │   │   ├── editor/           # Image editor
+│   │   │   ├── characters/       # Character CRUD
+│   │   │   ├── history/          # History viewing
+│   │   │   └── layout/           # Sidebar, navigation
 │   │   └── shared/               # Shared utilities and components
+│   │       ├── components/       # Button, Input, Skeleton, ErrorBoundary
+│   │       ├── hooks/            # useUpload, useToast
+│   │       └── utils/            # cn (className utility)
 │   │
 │   └── backend/                  # Convex backend
 │       └── convex/
 │           ├── schema.ts         # Database schema
 │           ├── auth.ts           # Auth configuration
-│           └── users.ts          # User queries
+│           ├── characters.ts     # Character mutations/queries
+│           ├── generations.ts    # Generation mutations/queries
+│           └── storage.ts        # File storage helpers
 │
 ├── tests/
-│   ├── convex/                   # Convex unit tests
-│   └── e2e/                      # Playwright E2E tests
+│   ├── convex/                   # Convex unit tests (33 tests)
+│   └── e2e/                      # Playwright E2E tests (64+ tests)
 │
 ├── turbo.json                    # Turborepo configuration
 ├── pnpm-workspace.yaml           # pnpm workspace config
@@ -103,6 +125,8 @@ The app uses a dark theme with the following design tokens:
 --accent-purple: #8B5CF6;
 --text-primary: #FAFAF9;
 --text-muted: #6B6B70;
+--success: #32D583;
+--error: #EF4444;
 
 /* Typography */
 --font-heading: "Instrument Sans";
@@ -113,6 +137,11 @@ The app uses a dark theme with the following design tokens:
 --radius-button: 12px;
 --radius-input: 12px;
 ```
+
+## Keyboard Shortcuts
+
+- **Cmd/Ctrl + Enter**: Generate image (when in prompt input)
+- **Escape**: Close modals and panels
 
 ## Running Tests
 
@@ -135,12 +164,40 @@ In this mode, auth is short-circuited in the UI/middleware so tests are determin
 ## Implementation Phases
 
 - [x] **Phase 1**: Project Setup & Authentication (Magic Links)
-- [ ] **Phase 2**: Layout & Sidebar Navigation
-- [ ] **Phase 3**: Image Editing Playground (Core UI)
-- [ ] **Phase 4**: Character Management
-- [ ] **Phase 5**: History
-- [ ] **Phase 6**: Polish & Final Testing
+- [x] **Phase 2**: Layout & Sidebar Navigation
+- [x] **Phase 3**: Image Editing Playground (Core UI)
+- [x] **Phase 4**: Character Management
+- [x] **Phase 5**: History
+- [x] **Phase 6**: Polish & Final Testing
 - [ ] **Phase 7**: Real AI Image Generation (Optional)
+
+### Phase 6 Polish Features
+
+- Toast notifications for success/error feedback (Sonner)
+- Error boundary component for graceful error handling
+- Loading skeletons for async content (characters, history)
+- Keyboard shortcuts (Cmd+Enter to generate)
+- Improved form validation with user feedback
+
+## Key Architectural Decisions
+
+1. **Turborepo monorepo** - Parallel task execution, caching, clear separation of apps
+2. **Convex for backend** - Real-time subscriptions, built-in file storage, type-safe queries
+3. **Convex Auth with magic links** - Passwordless authentication via Resend
+4. **Feature-based structure** - Co-located components, hooks, and tests per feature
+5. **App Router with route groups** - `(authenticated)` group for protected pages
+6. **CSS variables for design tokens** - Match Pencil design system colors via Tailwind
+
+## What Would Improve With More Time
+
+- Real AI image generation with OpenAI DALL-E or similar
+- Image download and sharing functionality
+- Advanced prompt templates
+- Character style consistency improvements
+- Pagination for history page
+- Search functionality for characters and history
+- Mobile-responsive design improvements
+- Animation refinements
 
 ## License
 
