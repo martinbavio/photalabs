@@ -160,7 +160,7 @@ export function CharacterModal({
           prev.filter((id) => !newlyUploadedIds.has(id))
         );
         setImageUrls((prev) =>
-          prev.filter((_, i) => !newlyUploadedIds.has(imageIds[i]))
+          prev.filter((_, i) => imageIds[i] && !newlyUploadedIds.has(imageIds[i]))
         );
       }
     } finally {
