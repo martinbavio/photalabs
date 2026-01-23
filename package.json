@@ -1,0 +1,17 @@
+{
+  "name": "photalabs",
+  "private": true,
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "test:e2e": "playwright test",
+    "lint": "turbo run lint"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0",
+    "turbo": "^2.3.4",
+    "typescript": "^5.7.3"
+  }
+}
