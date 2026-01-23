@@ -1,11 +1,11 @@
 import { convexTest } from "convex-test";
 import { expect, test, describe } from "vitest";
 import schema from "./schema";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import { modules } from "./test.setup";
 
 describe("Generations", () => {
-  test("create returns generation id when authenticated", async () => {
+  test("saveGeneration returns generation id", async () => {
     const t = convexTest(schema, modules);
 
     // Create a test user
@@ -16,29 +16,24 @@ describe("Generations", () => {
       });
     });
 
-    // Create generation as authenticated user
-    const generationId = await t
-      .withIdentity({ subject: userId })
-      .mutation(api.generations.create, {
-        prompt: "A cat sitting on a couch",
-        characterMentions: [],
-      });
+    // Create a mock storage ID for the generated image
+    const generatedImageId = await t.run(async (ctx) => {
+      return await ctx.storage.store(new Blob(["test image"]));
+    });
+
+    // Create generation using internal mutation
+    const generationId = await t.mutation(internal.generations.saveGeneration, {
+      userId,
+      prompt: "A cat sitting on a couch",
+      characterMentions: [],
+      generatedImageId,
+      model: "dall-e-3",
+    });
 
     expect(generationId).toBeDefined();
   });
 
-  test("create throws error when not authenticated", async () => {
-    const t = convexTest(schema, modules);
-
-    await expect(
-      t.mutation(api.generations.create, {
-        prompt: "A cat sitting on a couch",
-        characterMentions: [],
-      })
-    ).rejects.toThrow("Not authenticated");
-  });
-
-  test("create stores character mentions", async () => {
+  test("saveGeneration stores character mentions", async () => {
     const t = convexTest(schema, modules);
 
     // Create a test user
@@ -59,13 +54,19 @@ describe("Generations", () => {
       });
     });
 
-    // Create generation with character mention
-    const generationId = await t
-      .withIdentity({ subject: userId })
-      .mutation(api.generations.create, {
-        prompt: "@Sarah walking in a park",
-        characterMentions: [{ characterId, characterName: "Sarah" }],
-      });
+    // Create a mock storage ID for the generated image
+    const generatedImageId = await t.run(async (ctx) => {
+      return await ctx.storage.store(new Blob(["test image"]));
+    });
+
+    // Create generation with character mention using internal mutation
+    const generationId = await t.mutation(internal.generations.saveGeneration, {
+      userId,
+      prompt: "@Sarah walking in a park",
+      characterMentions: [{ characterId, characterName: "Sarah" }],
+      generatedImageId,
+      model: "dall-e-3",
+    });
 
     // Verify the generation was stored correctly
     const generation = await t.run(async (ctx) => {
@@ -94,15 +95,25 @@ describe("Generations", () => {
       });
     });
 
-    // Create multiple generations
-    await t.withIdentity({ subject: userId }).mutation(api.generations.create, {
-      prompt: "First generation",
-      characterMentions: [],
-    });
+    // Create multiple generations using direct db insert
+    await t.run(async (ctx) => {
+      const storageId1 = await ctx.storage.store(new Blob(["image1"]));
+      const storageId2 = await ctx.storage.store(new Blob(["image2"]));
 
-    await t.withIdentity({ subject: userId }).mutation(api.generations.create, {
-      prompt: "Second generation",
-      characterMentions: [],
+      await ctx.db.insert("generations", {
+        userId,
+        prompt: "First generation",
+        characterMentions: [],
+        generatedImageId: storageId1,
+        createdAt: Date.now() - 1000,
+      });
+      await ctx.db.insert("generations", {
+        userId,
+        prompt: "Second generation",
+        characterMentions: [],
+        generatedImageId: storageId2,
+        createdAt: Date.now(),
+      });
     });
 
     // Get generations
@@ -134,16 +145,25 @@ describe("Generations", () => {
       });
     });
 
-    // Create generation for user1
-    await t.withIdentity({ subject: userId1 }).mutation(api.generations.create, {
-      prompt: "User 1 generation",
-      characterMentions: [],
-    });
+    // Create generations for both users using direct db insert
+    await t.run(async (ctx) => {
+      const storageId1 = await ctx.storage.store(new Blob(["image1"]));
+      const storageId2 = await ctx.storage.store(new Blob(["image2"]));
 
-    // Create generation for user2
-    await t.withIdentity({ subject: userId2 }).mutation(api.generations.create, {
-      prompt: "User 2 generation",
-      characterMentions: [],
+      await ctx.db.insert("generations", {
+        userId: userId1,
+        prompt: "User 1 generation",
+        characterMentions: [],
+        generatedImageId: storageId1,
+        createdAt: Date.now(),
+      });
+      await ctx.db.insert("generations", {
+        userId: userId2,
+        prompt: "User 2 generation",
+        characterMentions: [],
+        generatedImageId: storageId2,
+        createdAt: Date.now(),
+      });
     });
 
     // Get generations as user1
@@ -166,12 +186,16 @@ describe("Generations", () => {
       });
     });
 
-    const generationId = await t
-      .withIdentity({ subject: userId })
-      .mutation(api.generations.create, {
+    const generationId = await t.run(async (ctx) => {
+      const storageId = await ctx.storage.store(new Blob(["test image"]));
+      return await ctx.db.insert("generations", {
+        userId,
         prompt: "Test generation",
         characterMentions: [],
+        generatedImageId: storageId,
+        createdAt: Date.now(),
       });
+    });
 
     // Try to get without authentication
     const result = await t.query(api.generations.getById, { id: generationId });
@@ -197,12 +221,16 @@ describe("Generations", () => {
     });
 
     // Create generation for user1
-    const generationId = await t
-      .withIdentity({ subject: userId1 })
-      .mutation(api.generations.create, {
+    const generationId = await t.run(async (ctx) => {
+      const storageId = await ctx.storage.store(new Blob(["test image"]));
+      return await ctx.db.insert("generations", {
+        userId: userId1,
         prompt: "User 1 generation",
         characterMentions: [],
+        generatedImageId: storageId,
+        createdAt: Date.now(),
       });
+    });
 
     // Try to get as user2
     const result = await t
@@ -223,15 +251,19 @@ describe("Generations", () => {
       });
     });
 
-    // Create 5 generations
-    for (let i = 0; i < 5; i++) {
-      await t
-        .withIdentity({ subject: userId })
-        .mutation(api.generations.create, {
+    // Create 5 generations using direct db insert
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 5; i++) {
+        const storageId = await ctx.storage.store(new Blob([`image${i}`]));
+        await ctx.db.insert("generations", {
+          userId,
           prompt: `Generation ${i}`,
           characterMentions: [],
+          generatedImageId: storageId,
+          createdAt: Date.now() - (5 - i) * 1000,
         });
-    }
+      }
+    });
 
     // Get only 3 recent
     const generations = await t

@@ -15,7 +15,9 @@
   "dependencies": {
     "@auth/core": "0.37.0",
     "@convex-dev/auth": "^0.0.80",
-    "convex": "^1.18.2"
+    "@google/generative-ai": "^0.24.1",
+    "convex": "^1.18.2",
+    "openai": "^6.16.0"
   },
   "devDependencies": {
     "@edge-runtime/vm": "^5.0.0",

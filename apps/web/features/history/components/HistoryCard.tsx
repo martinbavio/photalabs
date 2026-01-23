@@ -6,7 +6,7 @@ import { cn } from "@/shared/utils/cn";
 
 interface HistoryCardProps {
   id: Id<"generations">;
-  imageUrl: string;
+  imageUrl: string | null;
   prompt: string;
   characterMentions: Array<{
     characterId: Id<"characters">;
@@ -62,12 +62,18 @@ export function HistoryCard({
       onClick={onClick}
     >
       {/* Image */}
-      <img
-        src={imageUrl}
-        alt={prompt}
-        className="w-full h-full object-cover"
-        loading="lazy"
-      />
+      {imageUrl ? (
+        <img
+          src={imageUrl}
+          alt={prompt}
+          className="w-full h-full object-cover"
+          loading="lazy"
+        />
+      ) : (
+        <div className="w-full h-48 bg-bg-input flex items-center justify-center">
+          <span className="text-text-muted text-sm">Image unavailable</span>
+        </div>
+      )}
 
       {/* Hover Overlay */}
       <div

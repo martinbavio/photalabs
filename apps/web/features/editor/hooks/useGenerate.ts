@@ -1,19 +1,29 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useMutation, useQuery } from "convex/react";
+import { useAction, useQuery } from "convex/react";
 import { api } from "@photalabs/backend/convex/_generated/api";
 import { Id } from "@photalabs/backend/convex/_generated/dataModel";
 import { Character } from "../components/CharacterMentionDropdown";
 import { showToast } from "@/shared/hooks/useToast";
+
+// Supported image generation models
+export type ImageModel = "dall-e-3" | "nano-banana-pro";
+
+export const IMAGE_MODELS: { value: ImageModel; label: string }[] = [
+  { value: "dall-e-3", label: "DALL-E 3" },
+  { value: "nano-banana-pro", label: "Nano Banana Pro" },
+];
 
 interface GenerateState {
   prompt: string;
   mentionedCharacters: Character[];
   referenceImageId: Id<"_storage"> | null;
   referenceImageUrl: string | null;
+  generatedImageId: Id<"_storage"> | null;
   generatedImageUrl: string | null;
   isGenerating: boolean;
+  model: ImageModel;
 }
 
 type CharacterMention = {
@@ -27,11 +37,13 @@ export function useGenerate() {
     mentionedCharacters: [],
     referenceImageId: null,
     referenceImageUrl: null,
+    generatedImageId: null,
     generatedImageUrl: null,
     isGenerating: false,
+    model: "dall-e-3",
   });
 
-  const createGeneration = useMutation(api.generations.create);
+  const generateAction = useAction(api.generations.generate);
   const charactersQuery = useQuery(api.characters.getByUser);
   const characters = charactersQuery ?? [];
   const hasCharactersLoaded = charactersQuery !== undefined;
@@ -41,6 +53,12 @@ export function useGenerate() {
   const referenceImageUrlQuery = useQuery(
     api.storage.getUrl,
     state.referenceImageId ? { storageId: state.referenceImageId } : "skip"
+  );
+
+  // Get generated image URL from storage
+  const generatedImageUrlQuery = useQuery(
+    api.storage.getUrl,
+    state.generatedImageId ? { storageId: state.generatedImageId } : "skip"
   );
 
   const setPrompt = useCallback((prompt: string) => {
@@ -72,6 +90,10 @@ export function useGenerate() {
     }));
   }, []);
 
+  const setModel = useCallback((model: ImageModel) => {
+    setState((prev) => ({ ...prev, model }));
+  }, []);
+
   const generate = useCallback(async () => {
     if (!state.prompt.trim()) {
       showToast.error("Please enter a prompt");
@@ -100,22 +122,18 @@ export function useGenerate() {
         characterName: char.name,
       }));
 
-      await createGeneration({
+      // Call the generate action (handles OpenAI/Google AI + storage)
+      const result = await generateAction({
         prompt: state.prompt,
         characterMentions,
         referenceImageId: state.referenceImageId ?? undefined,
+        model: state.model,
       });
-
-      // Simulate delay for mock generation
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Generate a new mock image URL
-      const seed = Math.floor(Math.random() * 1000);
-      const generatedImageUrl = `https://picsum.photos/seed/${seed}/1024/1024`;
 
       setState((prev) => ({
         ...prev,
-        generatedImageUrl,
+        generatedImageId: result.generatedImageId,
+        generatedImageUrl: null,
         isGenerating: false,
       }));
 
@@ -126,7 +144,7 @@ export function useGenerate() {
       showToast.error(errorMessage);
       setState((prev) => ({ ...prev, isGenerating: false }));
     }
-  }, [state.prompt, state.mentionedCharacters, state.referenceImageId, createGeneration]);
+  }, [state.prompt, state.mentionedCharacters, state.referenceImageId, state.model, generateAction]);
 
   const reset = useCallback(() => {
     setState({
@@ -134,8 +152,10 @@ export function useGenerate() {
       mentionedCharacters: [],
       referenceImageId: null,
       referenceImageUrl: null,
+      generatedImageId: null,
       generatedImageUrl: null,
       isGenerating: false,
+      model: "dall-e-3",
     });
   }, []);
 
@@ -173,7 +193,10 @@ export function useGenerate() {
       prompt: string;
       characterMentions: CharacterMention[];
       referenceImageId?: Id<"_storage">;
-      generatedImageUrl: string;
+      // Legacy records have generatedImageUrl, new records have generatedImageId
+      generatedImageId?: Id<"_storage">;
+      generatedImageUrl: string | null; // Resolved URL from query
+      model?: ImageModel;
     }) => {
       const mentions = generation.characterMentions ?? [];
       const mentionedChars: Character[] = hasCharactersLoaded
@@ -189,8 +212,10 @@ export function useGenerate() {
         mentionedCharacters: mentionedChars,
         referenceImageId: generation.referenceImageId ?? null,
         referenceImageUrl: null, // Will be resolved by query
-        generatedImageUrl: generation.generatedImageUrl,
+        generatedImageId: generation.generatedImageId ?? null,
+        generatedImageUrl: generation.generatedImageUrl ?? null,
         isGenerating: false,
+        model: generation.model ?? "dall-e-3",
       });
     },
     [hasCharactersLoaded, resolveMentions]
@@ -202,8 +227,9 @@ export function useGenerate() {
     mentionedCharacters: state.mentionedCharacters,
     referenceImageId: state.referenceImageId,
     referenceImageUrl: referenceImageUrlQuery ?? null,
-    generatedImageUrl: state.generatedImageUrl,
+    generatedImageUrl: generatedImageUrlQuery ?? state.generatedImageUrl ?? null,
     isGenerating: state.isGenerating,
+    model: state.model,
     characters,
 
     // Actions
@@ -211,6 +237,7 @@ export function useGenerate() {
     addMention,
     setReferenceImage,
     removeReferenceImage,
+    setModel,
     generate,
     reset,
     restore,

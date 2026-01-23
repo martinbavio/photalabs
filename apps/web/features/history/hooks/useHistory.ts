@@ -15,7 +15,9 @@ export interface Generation {
   }>;
   referenceImageId?: Id<"_storage">;
   referenceImageUrl: string | null;
-  generatedImageUrl: string;
+  // Legacy records have generatedImageUrl, new records have generatedImageId
+  generatedImageId?: Id<"_storage">;
+  generatedImageUrl: string | null;
   createdAt: number;
 }
 

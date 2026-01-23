@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Info } from "lucide-react";
+import { Info, ChevronDown } from "lucide-react";
 import { PromptInput } from "./PromptInput";
 import { ReferenceImageUpload } from "./ReferenceImageUpload";
 import { GenerateButton } from "./GenerateButton";
 import { Character } from "./CharacterMentionDropdown";
 import { Id } from "@photalabs/backend/convex/_generated/dataModel";
 import { cn } from "@/shared/utils/cn";
+import { ImageModel, IMAGE_MODELS } from "../hooks/useGenerate";
 
 interface InputPanelProps {
   prompt: string;
@@ -21,6 +22,8 @@ interface InputPanelProps {
   onGenerate: () => void;
   onReset: () => void;
   isGenerating: boolean;
+  model: ImageModel;
+  onModelChange: (model: ImageModel) => void;
 }
 
 export function InputPanel({
@@ -35,6 +38,8 @@ export function InputPanel({
   onGenerate,
   onReset,
   isGenerating,
+  model,
+  onModelChange,
 }: InputPanelProps) {
   const [modifierLabel, setModifierLabel] = useState("Cmd/Ctrl");
 
@@ -70,6 +75,34 @@ export function InputPanel({
         onGenerate={onGenerate}
         isGenerating={isGenerating}
       />
+
+      {/* Model Selection */}
+      <div className="flex flex-col gap-2.5">
+        <span className="text-[13px] font-semibold text-text-primary">
+          Model
+        </span>
+        <div className="relative">
+          <select
+            value={model}
+            onChange={(e) => onModelChange(e.target.value as ImageModel)}
+            className={cn(
+              "w-full appearance-none",
+              "bg-bg-input rounded-[12px] px-4 py-3 pr-10",
+              "border border-border",
+              "text-sm text-text-primary",
+              "focus:outline-none focus:ring-2 focus:ring-accent-yellow/50",
+              "cursor-pointer"
+            )}
+          >
+            {IMAGE_MODELS.map((m) => (
+              <option key={m.value} value={m.value}>
+                {m.label}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted pointer-events-none" />
+        </div>
+      </div>
 
       {/* Reference Image Section */}
       <div className="flex flex-col gap-2.5">
