@@ -20,6 +20,10 @@ export function LoginForm() {
     setError(null);
 
     try {
+      if (process.env.NEXT_PUBLIC_E2E === "1") {
+        setStep("linkSent");
+        return;
+      }
       const formData = new FormData();
       formData.set("email", email);
       await signIn("resend", formData);

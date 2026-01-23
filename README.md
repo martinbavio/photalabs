@@ -127,6 +127,11 @@ pnpm test:e2e
 pnpm test
 ```
 
+### E2E Test Mode
+
+Playwright runs the web app with `NEXT_PUBLIC_E2E=1` to avoid calling the Convex auth flow.
+In this mode, auth is short-circuited in the UI/middleware so tests are deterministic without a backend.
+
 ## Implementation Phases
 
 - [x] **Phase 1**: Project Setup & Authentication (Magic Links)
