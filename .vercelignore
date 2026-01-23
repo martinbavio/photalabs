@@ -1,0 +1,23 @@
+# Tests
+tests/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+playwright.config.ts
+playwright-report/
+
+# Documentation
+*.md
+!README.md
+
+# IDE and editor
+.vscode/
+.idea/
+
+# Local environment files
+.env.local
+.env.local.example
+
+# Convex local development
+apps/backend/.env.local
