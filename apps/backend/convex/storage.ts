@@ -43,7 +43,8 @@ export const getUrls = query({
 
 /**
  * Delete a file from storage.
- * Only authenticated users can delete files.
+ * Verifies that the file either belongs to a character owned by the user,
+ * or is not yet associated with any character (pending upload).
  */
 export const deleteFile = mutation({
   args: { storageId: v.id("_storage") },
@@ -52,6 +53,21 @@ export const deleteFile = mutation({
     if (!userId) {
       throw new Error("Not authenticated");
     }
+
+    // Check if this storage ID belongs to any character
+    const characters = await ctx.db.query("characters").collect();
+    const owningCharacter = characters.find((c) =>
+      c.imageIds.includes(args.storageId)
+    );
+
+    if (owningCharacter) {
+      // File belongs to a character - verify ownership
+      if (owningCharacter.userId !== userId) {
+        throw new Error("Not authorized to delete this file");
+      }
+    }
+    // If no character owns this file, it's a pending upload - allow deletion
+
     await ctx.storage.delete(args.storageId);
   },
 });

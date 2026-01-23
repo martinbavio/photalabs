@@ -147,6 +147,15 @@ export const update = mutation({
       if (args.imageIds.length > MAX_IMAGES) {
         throw new Error(`Characters can have at most ${MAX_IMAGES} reference images`);
       }
+
+      // Find images that are being removed and delete them from storage
+      const removedImageIds = character.imageIds.filter(
+        (id) => !args.imageIds!.includes(id)
+      );
+      await Promise.all(
+        removedImageIds.map((id) => ctx.storage.delete(id))
+      );
+
       updates.imageIds = args.imageIds;
     }
 

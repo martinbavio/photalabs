@@ -29,6 +29,10 @@ export function CharacterModal({
   const [imageUrls, setImageUrls] = useState<(string | null)[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Track newly uploaded images during this session (for cleanup on failure)
+  const [newlyUploadedIds, setNewlyUploadedIds] = useState<Set<Id<"_storage">>>(
+    new Set()
+  );
 
   const isEditMode = !!characterId;
 
@@ -66,6 +70,7 @@ export function CharacterModal({
         setImageIds([]);
         setImageUrls([]);
       }
+      setNewlyUploadedIds(new Set());
     }
   }, [isOpen, isEditMode]);
 
@@ -82,6 +87,8 @@ export function CharacterModal({
         newUrls[index] = "uploading"; // Placeholder
         return newUrls;
       });
+      // Track this as a newly uploaded image
+      setNewlyUploadedIds((prev) => new Set(prev).add(storageId));
     },
     []
   );
@@ -93,16 +100,21 @@ export function CharacterModal({
       setImageIds((prev) => prev.filter((_, i) => i !== index));
       setImageUrls((prev) => prev.filter((_, i) => i !== index));
 
-      // Only delete from storage if this is a newly uploaded file (not from existing character)
-      if (storageIdToRemove && !isEditMode) {
+      // Delete from storage if this is a newly uploaded file (not from the original character)
+      if (storageIdToRemove && newlyUploadedIds.has(storageIdToRemove)) {
         try {
           await deleteFile({ storageId: storageIdToRemove });
+          setNewlyUploadedIds((prev) => {
+            const next = new Set(prev);
+            next.delete(storageIdToRemove);
+            return next;
+          });
         } catch {
           // Silently fail - file might not exist
         }
       }
     },
-    [imageIds, deleteFile, isEditMode]
+    [imageIds, deleteFile, newlyUploadedIds]
   );
 
   const handleSave = useCallback(async () => {
@@ -136,6 +148,21 @@ export function CharacterModal({
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save character");
+      // Clean up newly uploaded images on failure to prevent orphans
+      if (newlyUploadedIds.size > 0) {
+        await Promise.allSettled(
+          Array.from(newlyUploadedIds).map((id) =>
+            deleteFile({ storageId: id })
+          )
+        );
+        setNewlyUploadedIds(new Set());
+        setImageIds((prev) =>
+          prev.filter((id) => !newlyUploadedIds.has(id))
+        );
+        setImageUrls((prev) =>
+          prev.filter((_, i) => !newlyUploadedIds.has(imageIds[i]))
+        );
+      }
     } finally {
       setIsSaving(false);
     }
@@ -148,6 +175,8 @@ export function CharacterModal({
     createCharacter,
     onSuccess,
     onClose,
+    newlyUploadedIds,
+    deleteFile,
   ]);
 
   const handleClose = useCallback(() => {
