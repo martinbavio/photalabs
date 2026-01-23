@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@photalabs/backend/convex/_generated/api";
 import { Id } from "@photalabs/backend/convex/_generated/dataModel";
@@ -15,6 +15,11 @@ interface GenerateState {
   isGenerating: boolean;
 }
 
+type CharacterMention = {
+  characterId: Id<"characters">;
+  characterName: string;
+};
+
 export function useGenerate() {
   const [state, setState] = useState<GenerateState>({
     prompt: "",
@@ -26,7 +31,10 @@ export function useGenerate() {
   });
 
   const createGeneration = useMutation(api.generations.create);
-  const characters = useQuery(api.characters.getByUser) ?? [];
+  const charactersQuery = useQuery(api.characters.getByUser);
+  const characters = charactersQuery ?? [];
+  const hasCharactersLoaded = charactersQuery !== undefined;
+  const pendingMentionsRef = useRef<CharacterMention[] | null>(null);
 
   // Get reference image URL
   const referenceImageUrlQuery = useQuery(
@@ -123,6 +131,63 @@ export function useGenerate() {
     });
   }, []);
 
+  const resolveMentions = useCallback(
+    (mentions: CharacterMention[]) => {
+      if (mentions.length === 0) return [];
+      return mentions
+        .map((mention) => {
+          const found = characters.find((c) => c._id === mention.characterId);
+          if (!found) return null;
+          return {
+            _id: found._id,
+            name: found.name,
+            imageUrls: found.imageUrls,
+          };
+        })
+        .filter((c): c is Character => c !== null);
+    },
+    [characters]
+  );
+
+  useEffect(() => {
+    if (!hasCharactersLoaded || !pendingMentionsRef.current) return;
+    const resolved = resolveMentions(pendingMentionsRef.current);
+    setState((prev) => ({
+      ...prev,
+      mentionedCharacters: resolved,
+    }));
+    pendingMentionsRef.current = null;
+  }, [hasCharactersLoaded, resolveMentions]);
+
+  // Restore a generation from history
+  const restore = useCallback(
+    (generation: {
+      prompt: string;
+      characterMentions: CharacterMention[];
+      referenceImageId?: Id<"_storage">;
+      generatedImageUrl: string;
+    }) => {
+      const mentions = generation.characterMentions ?? [];
+      const mentionedChars: Character[] = hasCharactersLoaded
+        ? resolveMentions(mentions)
+        : [];
+
+      if (!hasCharactersLoaded && mentions.length > 0) {
+        pendingMentionsRef.current = mentions;
+      }
+
+      setState({
+        prompt: generation.prompt,
+        mentionedCharacters: mentionedChars,
+        referenceImageId: generation.referenceImageId ?? null,
+        referenceImageUrl: null, // Will be resolved by query
+        generatedImageUrl: generation.generatedImageUrl,
+        isGenerating: false,
+      });
+    },
+    [hasCharactersLoaded, resolveMentions]
+  );
+
   return {
     // State
     prompt: state.prompt,
@@ -140,5 +205,6 @@ export function useGenerate() {
     removeReferenceImage,
     generate,
     reset,
+    restore,
   };
 }

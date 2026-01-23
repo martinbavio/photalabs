@@ -1,10 +1,20 @@
 "use client";
 
+import { useState, useEffect, useRef } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { History } from "lucide-react";
-import { InputPanel, ResultPanel, useGenerate } from "@/features/editor";
+import { useQuery } from "convex/react";
+import { api } from "@photalabs/backend/convex/_generated/api";
+import { Id } from "@photalabs/backend/convex/_generated/dataModel";
+import { InputPanel, ResultPanel, HistoryPanel, useGenerate } from "@/features/editor";
 import { cn } from "@/shared/utils/cn";
 
 export default function CreatePage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const hasRestoredRef = useRef(false);
+
   const {
     prompt,
     setPrompt,
@@ -18,7 +28,41 @@ export default function CreatePage() {
     isGenerating,
     generate,
     reset,
+    restore,
   } = useGenerate();
+
+  // Handle restore from URL params (when coming from history page)
+  const restoreId = searchParams.get("restore") as Id<"generations"> | null;
+  const generationToRestore = useQuery(
+    api.generations.getById,
+    restoreId ? { id: restoreId } : "skip"
+  );
+
+  useEffect(() => {
+    if (generationToRestore && restoreId && !hasRestoredRef.current) {
+      restore(generationToRestore);
+      hasRestoredRef.current = true;
+      // Clear the URL param after restoring
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("restore");
+      const next = params.toString();
+      router.replace(next ? `/create?${next}` : "/create");
+    }
+  }, [generationToRestore, restoreId, restore, router, searchParams]);
+
+  const handleHistorySelect = (generation: {
+    _id: Id<"generations">;
+    prompt: string;
+    characterMentions: Array<{
+      characterId: Id<"characters">;
+      characterName: string;
+    }>;
+    referenceImageId?: Id<"_storage">;
+    generatedImageUrl: string;
+  }) => {
+    restore(generation);
+    setHistoryOpen(false);
+  };
 
   return (
     <div className="flex flex-col gap-7 h-full p-9 px-11">
@@ -34,6 +78,7 @@ export default function CreatePage() {
         </div>
 
         <button
+          onClick={() => setHistoryOpen(true)}
           className={cn(
             "flex items-center gap-2",
             "bg-bg-panel rounded-[12px] px-[18px] py-3",
@@ -65,6 +110,13 @@ export default function CreatePage() {
 
         <ResultPanel imageUrl={generatedImageUrl} isLoading={isGenerating} />
       </div>
+
+      {/* History Panel */}
+      <HistoryPanel
+        isOpen={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        onSelect={handleHistorySelect}
+      />
     </div>
   );
 }
