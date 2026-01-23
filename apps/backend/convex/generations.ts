@@ -219,14 +219,13 @@ export const generate = action({
         throw new Error("Failed to generate image: no image data returned from Nano Banana Pro");
       }
 
-      // Convert base64 to blob using web APIs (Convex runtime is V8, not Node.js)
+      // Convert base64 to blob in both browser-like and Node runtimes
       const base64Data = imagePart.inlineData.data;
       const mimeType = imagePart.inlineData.mimeType;
-      const binaryString = atob(base64Data);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
+      const bytes =
+        typeof atob === "function"
+          ? Uint8Array.from(atob(base64Data), (char) => char.charCodeAt(0))
+          : Buffer.from(base64Data, "base64");
       imageBlob = new Blob([bytes], { type: mimeType });
     } else {
       // Generate with DALL-E 3
