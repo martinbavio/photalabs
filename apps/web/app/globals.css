@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+@theme {
+  /* Colors - from Pencil design */
+  --color-bg-primary: #0B0B0E;
+  --color-bg-panel: #16161A;
+  --color-bg-input: #0F0F0F;
+  --color-border: #2A2A2E;
+  --color-accent-yellow: #e8e700;
+  --color-accent-purple: #8B5CF6;
+  --color-text-primary: #FAFAF9;
+  --color-text-muted: #6B6B70;
+  --color-text-placeholder: #4A4A50;
+  --color-success: #32D583;
+  --color-error: #EF4444;
+
+  /* Border radius */
+  --radius-panel: 20px;
+  --radius-button: 12px;
+  --radius-input: 12px;
+  --radius-small: 10px;
+
+  /* Spacing */
+  --sidebar-width: 240px;
+
+  /* Fonts */
+  --font-heading: "Instrument Sans", sans-serif;
+  --font-body: "Inter", sans-serif;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
