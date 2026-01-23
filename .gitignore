@@ -25,6 +25,7 @@ Thumbs.db
 
 # Testing
 /test-results/
+/apps/web/test-results/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
