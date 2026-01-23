@@ -2,6 +2,31 @@
 
 A mini AI image editing playground with mock image generation, character management, and generation history.
 
+## How to run the project
+
+Go to https://photalabs-web.vercel.app and use it directly with your email!
+
+## Architecture Decisions
+
+1. **Turborepo monorepo** - Parallel task execution, caching, clear separation of apps
+2. **Convex for backend** - Real-time subscriptions, built-in file storage, type-safe queries
+3. **Convex Auth with magic links** - Passwordless authentication via Resend
+4. **Feature-based structure** - Co-located components, hooks, and tests per feature
+5. **App Router with route groups** - `(authenticated)` group for protected pages
+6. **CSS variables for design tokens** - Match Pencil design system colors via Tailwind
+
+## What Would Improve With More Time
+
+- UI and animation refinements
+- Mobile-responsive design improvements
+- Better looking sign-in page
+- Real AI image generation with OpenAI DALL-E, Nano Banana or similar
+- Explore section with community generations
+- Image upscaling for download and sharing functionality
+- Character style consistency improvements
+- Pagination for history page
+- Search functionality for characters and history
+
 ## Tech Stack
 
 - **Frontend**: Next.js 15 (App Router) + React 19
@@ -22,7 +47,7 @@ A mini AI image editing playground with mock image generation, character managem
 - **Real-time Updates**: Live data sync powered by Convex
 - **Dark Theme**: Beautiful dark UI matching Pencil designs
 
-## Getting Started
+## Getting Started for Dev
 
 ### Prerequisites
 
@@ -160,45 +185,3 @@ pnpm test
 
 Playwright runs the web app with `NEXT_PUBLIC_E2E=1` to avoid calling the Convex auth flow.
 In this mode, auth is short-circuited in the UI/middleware so tests are deterministic without a backend.
-
-## Implementation Phases
-
-- [x] **Phase 1**: Project Setup & Authentication (Magic Links)
-- [x] **Phase 2**: Layout & Sidebar Navigation
-- [x] **Phase 3**: Image Editing Playground (Core UI)
-- [x] **Phase 4**: Character Management
-- [x] **Phase 5**: History
-- [x] **Phase 6**: Polish & Final Testing
-- [ ] **Phase 7**: Real AI Image Generation (Optional)
-
-### Phase 6 Polish Features
-
-- Toast notifications for success/error feedback (Sonner)
-- Error boundary component for graceful error handling
-- Loading skeletons for async content (characters, history)
-- Keyboard shortcuts (Cmd+Enter to generate)
-- Improved form validation with user feedback
-
-## Key Architectural Decisions
-
-1. **Turborepo monorepo** - Parallel task execution, caching, clear separation of apps
-2. **Convex for backend** - Real-time subscriptions, built-in file storage, type-safe queries
-3. **Convex Auth with magic links** - Passwordless authentication via Resend
-4. **Feature-based structure** - Co-located components, hooks, and tests per feature
-5. **App Router with route groups** - `(authenticated)` group for protected pages
-6. **CSS variables for design tokens** - Match Pencil design system colors via Tailwind
-
-## What Would Improve With More Time
-
-- Real AI image generation with OpenAI DALL-E or similar
-- Image download and sharing functionality
-- Advanced prompt templates
-- Character style consistency improvements
-- Pagination for history page
-- Search functionality for characters and history
-- Mobile-responsive design improvements
-- Animation refinements
-
-## License
-
-MIT

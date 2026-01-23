@@ -4,7 +4,6 @@ import { convexAuth } from "@convex-dev/auth/server";
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   providers: [
     Resend({
-      from: "Photalabs <noreply@photalabs.com>",
       sendVerificationRequest: async ({ identifier: email, url, provider }) => {
         const res = await fetch("https://api.resend.com/emails", {
           method: "POST",
