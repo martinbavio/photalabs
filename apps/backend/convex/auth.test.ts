@@ -1,23 +1,24 @@
 import { convexTest } from "convex-test";
-import { expect, test, describe, beforeEach } from "vitest";
-import schema from "../../apps/backend/convex/schema";
-import { api } from "../../apps/backend/convex/_generated/api";
+import { expect, test, describe } from "vitest";
+import schema from "./schema";
+import { api } from "./_generated/api";
+import { modules } from "./test.setup";
 
 describe("Authentication", () => {
   test("isAuthenticated returns false when not logged in", async () => {
-    const t = convexTest(schema);
+    const t = convexTest(schema, modules);
     const result = await t.query(api.users.isAuthenticated, {});
     expect(result).toBe(false);
   });
 
   test("viewer returns null when not logged in", async () => {
-    const t = convexTest(schema);
+    const t = convexTest(schema, modules);
     const result = await t.query(api.users.viewer, {});
     expect(result).toBe(null);
   });
 
   test("isAuthenticated returns true after authentication", async () => {
-    const t = convexTest(schema);
+    const t = convexTest(schema, modules);
 
     // Create a test user
     const userId = await t.run(async (ctx) => {
@@ -33,7 +34,7 @@ describe("Authentication", () => {
   });
 
   test("viewer returns user data after authentication", async () => {
-    const t = convexTest(schema);
+    const t = convexTest(schema, modules);
 
     // Create a test user
     const userId = await t.run(async (ctx) => {
