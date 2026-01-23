@@ -20,15 +20,17 @@ export const create = mutation({
       throw new Error("Not authenticated");
     }
 
-    // Validate image count
     if (args.imageIds.length < MIN_IMAGES) {
-      throw new Error(`Characters require at least ${MIN_IMAGES} reference images`);
+      throw new Error(
+        `Characters require at least ${MIN_IMAGES} reference images`
+      );
     }
     if (args.imageIds.length > MAX_IMAGES) {
-      throw new Error(`Characters can have at most ${MAX_IMAGES} reference images`);
+      throw new Error(
+        `Characters can have at most ${MAX_IMAGES} reference images`
+      );
     }
 
-    // Validate name is not empty
     const trimmedName = args.name.trim();
     if (!trimmedName) {
       throw new Error("Character name is required");
@@ -55,7 +57,6 @@ export const get = query({
       return null;
     }
 
-    // Resolve image URLs
     const imageUrls = await Promise.all(
       character.imageIds.map((id) => ctx.storage.getUrl(id))
     );
@@ -85,7 +86,6 @@ export const getByUser = query({
       .order("desc")
       .collect();
 
-    // Resolve image URLs for each character
     const charactersWithUrls = await Promise.all(
       characters.map(async (character) => {
         const imageUrls = await Promise.all(
@@ -123,14 +123,13 @@ export const update = mutation({
       throw new Error("Character not found");
     }
 
-    // Verify ownership
     if (character.userId !== userId) {
       throw new Error("Not authorized to update this character");
     }
 
-    const updates: Partial<{ name: string; imageIds: typeof args.imageIds }> = {};
+    const updates: Partial<{ name: string; imageIds: typeof args.imageIds }> =
+      {};
 
-    // Update name if provided
     if (args.name !== undefined) {
       const trimmedName = args.name.trim();
       if (!trimmedName) {
@@ -139,22 +138,22 @@ export const update = mutation({
       updates.name = trimmedName;
     }
 
-    // Update images if provided
     if (args.imageIds !== undefined) {
       if (args.imageIds.length < MIN_IMAGES) {
-        throw new Error(`Characters require at least ${MIN_IMAGES} reference images`);
+        throw new Error(
+          `Characters require at least ${MIN_IMAGES} reference images`
+        );
       }
       if (args.imageIds.length > MAX_IMAGES) {
-        throw new Error(`Characters can have at most ${MAX_IMAGES} reference images`);
+        throw new Error(
+          `Characters can have at most ${MAX_IMAGES} reference images`
+        );
       }
 
-      // Find images that are being removed and delete them from storage
       const removedImageIds = character.imageIds.filter(
         (id) => !args.imageIds!.includes(id)
       );
-      await Promise.all(
-        removedImageIds.map((id) => ctx.storage.delete(id))
-      );
+      await Promise.all(removedImageIds.map((id) => ctx.storage.delete(id)));
 
       updates.imageIds = args.imageIds;
     }
@@ -180,17 +179,14 @@ export const remove = mutation({
       throw new Error("Character not found");
     }
 
-    // Verify ownership
     if (character.userId !== userId) {
       throw new Error("Not authorized to delete this character");
     }
 
-    // Delete all associated images from storage
     await Promise.all(
       character.imageIds.map((id) => ctx.storage.delete(id))
     );
 
-    // Delete the character record
     await ctx.db.delete(args.id);
   },
 });
@@ -212,13 +208,11 @@ export const search = query({
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
-    // Filter by name (case-insensitive)
     const searchLower = args.query.toLowerCase();
     const filtered = characters.filter((c) =>
       c.name.toLowerCase().includes(searchLower)
     );
 
-    // Return with first image URL for avatar display
     const results = await Promise.all(
       filtered.map(async (character) => {
         const avatarUrl = character.imageIds[0]
