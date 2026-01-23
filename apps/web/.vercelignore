@@ -1,11 +1,8 @@
 # Tests
-tests/
 *.test.ts
 *.test.tsx
 *.spec.ts
 *.spec.tsx
-playwright.config.ts
-playwright-report/
 
 # Documentation
 *.md
@@ -18,6 +15,3 @@ playwright-report/
 # Local environment files
 .env.local
 .env.local.example
-
-# Convex local development
-apps/backend/.env.local
