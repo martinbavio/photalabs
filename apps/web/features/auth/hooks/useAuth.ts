@@ -11,6 +11,7 @@ const E2E_MOCK_USER = {
   email: "john@example.com",
   image: null,
   tokenIdentifier: "e2e-token",
+  credits: 20,
 };
 
 function isE2EAuthDisabled() {

@@ -94,8 +94,18 @@ export const generate = action({
     const userId = await ctx.runQuery(internal.generations.getCurrentUserId);
     if (!userId) throw new Error("Not authenticated");
 
+    // Reserve credit upfront (atomic check + deduct to prevent race conditions)
+    // This throws if user has no credits remaining
+    try {
+      await ctx.runMutation(internal.users.reserveCredit, { userId });
+    } catch {
+      throw new Error("No credits remaining. You have used all your image generation credits.");
+    }
+
     const model: ModelType = args.model ?? "dall-e-3";
 
+    // Wrap generation in try/catch to refund credit on failure
+    try {
     // Validate API keys
     if (!process.env.OPENAI_API_KEY) {
       throw new Error("OpenAI API key not configured. Please set OPENAI_API_KEY environment variable.");
@@ -263,6 +273,11 @@ export const generate = action({
     });
 
     return { generationId, generatedImageId };
+    } catch (error) {
+      // Refund the reserved credit on failure
+      await ctx.runMutation(internal.users.refundCredit, { userId });
+      throw error;
+    }
   },
 });
 
