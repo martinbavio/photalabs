@@ -73,6 +73,9 @@ export const saveGeneration = internalMutation({
   },
 });
 
+// Maximum prompt length for DALL-E 3
+const DALLE_MAX_PROMPT_LENGTH = 4000;
+
 // Action to generate image with DALL-E or Nano Banana Pro
 export const generate = action({
   args: {
@@ -93,6 +96,14 @@ export const generate = action({
 
     const model: ModelType = args.model ?? "dall-e-3";
 
+    // Validate API keys
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error("OpenAI API key not configured. Please set OPENAI_API_KEY environment variable.");
+    }
+    if (model === "nano-banana-pro" && !process.env.GOOGLE_AI_API_KEY) {
+      throw new Error("Google AI API key not configured. Please set GOOGLE_AI_API_KEY environment variable.");
+    }
+
     // Initialize OpenAI for vision analysis (used by both models)
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
@@ -108,36 +119,36 @@ export const generate = action({
         characterIds,
       });
 
-      // Analyze each character's appearance with GPT-4 Vision
-      const characterDescriptions: string[] = [];
-      for (const character of characterData) {
-        if (character.imageUrl) {
-          const visionResponse = await openai.chat.completions.create({
-            model: "gpt-4o",
-            messages: [
-              {
-                role: "user",
-                content: [
+      // Analyze each character's appearance with GPT-4 Vision (in parallel)
+      const characterDescriptions = (
+        await Promise.all(
+          characterData
+            .filter((character) => character.imageUrl)
+            .map(async (character) => {
+              const visionResponse = await openai.chat.completions.create({
+                model: "gpt-4o",
+                messages: [
                   {
-                    type: "text",
-                    text: `Describe this person's physical appearance for use in image generation. Include: hair color/style, eye color, skin tone, facial features, and any distinctive characteristics. Be specific and concise. Start with "${character.name} is" and keep it under 50 words.`,
-                  },
-                  {
-                    type: "image_url",
-                    image_url: { url: character.imageUrl },
+                    role: "user",
+                    content: [
+                      {
+                        type: "text",
+                        text: `Describe this person's physical appearance for use in image generation. Include: hair color/style, eye color, skin tone, facial features, and any distinctive characteristics. Be specific and concise. Start with "${character.name} is" and keep it under 50 words.`,
+                      },
+                      {
+                        type: "image_url",
+                        image_url: { url: character.imageUrl! },
+                      },
+                    ],
                   },
                 ],
-              },
-            ],
-            max_tokens: 100,
-          });
+                max_tokens: 100,
+              });
 
-          const description = visionResponse.choices[0]?.message?.content;
-          if (description) {
-            characterDescriptions.push(description);
-          }
-        }
-      }
+              return visionResponse.choices[0]?.message?.content;
+            })
+        )
+      ).filter((desc): desc is string => desc !== null && desc !== undefined);
 
       if (characterDescriptions.length > 0) {
         fullPrompt = `${fullPrompt}. Character descriptions: ${characterDescriptions.join(" ")}`;
@@ -176,6 +187,13 @@ export const generate = action({
       }
     }
 
+    // Validate prompt length for DALL-E 3
+    if (model === "dall-e-3" && fullPrompt.length > DALLE_MAX_PROMPT_LENGTH) {
+      throw new Error(
+        `Prompt is too long (${fullPrompt.length} characters). DALL-E 3 has a maximum of ${DALLE_MAX_PROMPT_LENGTH} characters. Try reducing your prompt or using fewer character mentions.`
+      );
+    }
+
     // Generate image based on selected model
     let imageBlob: Blob;
 
@@ -186,9 +204,10 @@ export const generate = action({
 
       const result = await geminiModel.generateContent({
         contents: [{ role: "user", parts: [{ text: fullPrompt }] }],
+        // responseModalities is a valid config for image generation models but not in SDK types yet
         generationConfig: {
           responseModalities: ["image", "text"],
-        } as never,
+        } as { responseModalities: string[] },
       });
 
       const response = result.response;
@@ -200,14 +219,10 @@ export const generate = action({
         throw new Error("Failed to generate image: no image data returned from Nano Banana Pro");
       }
 
-      // Convert base64 to blob
+      // Convert base64 to blob (Node runtime doesn't support atob)
       const base64Data = imagePart.inlineData.data;
       const mimeType = imagePart.inlineData.mimeType;
-      const binaryString = atob(base64Data);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
+      const bytes = Buffer.from(base64Data, "base64");
       imageBlob = new Blob([bytes], { type: mimeType });
     } else {
       // Generate with DALL-E 3
