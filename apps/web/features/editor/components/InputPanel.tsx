@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LayoutDashboard, ChevronDown, Info } from "lucide-react";
+import { Info } from "lucide-react";
 import { PromptInput } from "./PromptInput";
 import { ReferenceImageUpload } from "./ReferenceImageUpload";
 import { GenerateButton } from "./GenerateButton";
@@ -59,20 +59,6 @@ export function InputPanel({
         <h2 className="text-lg font-semibold text-text-primary font-[family-name:var(--font-heading)]">
           Input
         </h2>
-
-        <button
-          className={cn(
-            "flex items-center gap-2",
-            "bg-[#1A1A1E] rounded-[10px] px-3.5 py-2",
-            "border border-border",
-            "text-text-muted text-xs font-medium",
-            "hover:bg-border transition-colors"
-          )}
-        >
-          <LayoutDashboard className="h-4 w-4" />
-          <span>Form</span>
-          <ChevronDown className="h-4 w-4" />
-        </button>
       </div>
 
       {/* Prompt Section */}
