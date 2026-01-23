@@ -1,6 +1,18 @@
 import { test, expect } from "@playwright/test";
 
+// Helper to disable E2E auth bypass (to test unauthenticated flows)
+async function disableE2EAuth(page: ReturnType<typeof test["info"]>["page"]) {
+  await page.addInitScript(() => {
+    window.localStorage.setItem("e2e_auth_disabled", "true");
+  });
+}
+
 test.describe("Authentication", () => {
+  test.beforeEach(async ({ page }) => {
+    // Disable E2E auth bypass to test login and redirect behavior
+    await disableE2EAuth(page);
+  });
+
   test("login page renders with dark theme", async ({ page }) => {
     await page.goto("/");
 

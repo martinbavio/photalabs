@@ -8,11 +8,9 @@ const isAuthPage = createRouteMatcher(["/"]);
 const isProtectedRoute = createRouteMatcher(["/create", "/history", "/characters"]);
 
 export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
+  // In E2E mode, bypass auth checks to allow testing of all routes
   if (process.env.NEXT_PUBLIC_E2E === "1") {
-    if (isProtectedRoute(request)) {
-      return nextjsMiddlewareRedirect(request, "/");
-    }
-    return;
+    return; // Allow access to all routes
   }
 
   const isAuthenticated = await convexAuth.isAuthenticated();

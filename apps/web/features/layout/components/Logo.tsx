@@ -9,37 +9,40 @@ interface LogoProps {
 
 export function Logo({ size = "md", showText = true }: LogoProps) {
   const sizes = {
-    sm: "w-8 h-8",
-    md: "w-10 h-10",
-    lg: "w-14 h-14",
+    sm: "w-6 h-6",
+    md: "w-8 h-8",
+    lg: "w-10 h-10",
   };
 
   const textSizes = {
     sm: "text-base",
-    md: "text-lg",
+    md: "text-[22px]",
     lg: "text-2xl",
   };
 
   return (
     <div className="flex items-center gap-3">
-      <div
-        className={cn(
-          "relative rounded-full bg-accent-yellow flex items-center justify-center",
-          sizes[size]
-        )}
-      >
-        {/* Abstract shapes inside the circle */}
+      <div className={cn("relative", sizes[size])}>
+        {/* Logo mark matching Pencil design: outlined circle with two ellipses */}
         <svg
-          viewBox="0 0 40 40"
+          viewBox="0 0 32 32"
           className="w-full h-full"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
-          <circle cx="20" cy="20" r="20" fill="#e8e700" />
-          {/* Triangle */}
-          <path d="M14 14L20 26L26 14H14Z" fill="#0B0B0E" />
-          {/* Small circle */}
-          <circle cx="20" cy="11" r="3" fill="#0B0B0E" />
+          {/* Outer circle with stroke only */}
+          <circle
+            cx="16"
+            cy="16"
+            r="15"
+            stroke="#e8e700"
+            strokeWidth="2"
+            fill="none"
+          />
+          {/* Left ellipse - taller */}
+          <ellipse cx="11.5" cy="16" rx="4.5" ry="10" fill="#e8e700" />
+          {/* Right ellipse - shorter */}
+          <ellipse cx="20.5" cy="12.5" rx="3.5" ry="6.5" fill="#e8e700" />
         </svg>
       </div>
       {showText && (
