@@ -202,13 +202,13 @@ export const generate = action({
       const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
       const geminiModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp-image-generation" });
 
+      // responseModalities is a valid config for image generation models but not in SDK types yet
       const result = await geminiModel.generateContent({
         contents: [{ role: "user", parts: [{ text: fullPrompt }] }],
-        // responseModalities is a valid config for image generation models but not in SDK types yet
         generationConfig: {
           responseModalities: ["image", "text"],
-        } as { responseModalities: string[] },
-      });
+        },
+      } as Parameters<typeof geminiModel.generateContent>[0]);
 
       const response = result.response;
       const imagePart = response.candidates?.[0]?.content?.parts?.find(
