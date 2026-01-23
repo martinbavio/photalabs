@@ -36,21 +36,9 @@ export const isAuthenticated = query({
   },
 });
 
-// Internal query to get user credits (for use in actions)
-export const getUserCredits = internalQuery({
-  args: { userId: v.id("users") },
-  handler: async (ctx, args) => {
-    const userCredits = await ctx.db
-      .query("userCredits")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .unique();
-
-    return userCredits?.credits ?? DEFAULT_CREDITS;
-  },
-});
-
-// Internal mutation to deduct a credit (creates record if doesn't exist)
-export const deductCredit = internalMutation({
+// Internal mutation to atomically reserve a credit (check + deduct in one transaction)
+// This prevents race conditions from concurrent generations
+export const reserveCredit = internalMutation({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
     const userCredits = await ctx.db
@@ -59,18 +47,46 @@ export const deductCredit = internalMutation({
       .unique();
 
     if (userCredits) {
-      // Update existing record
+      // Check if user has credits
+      if (userCredits.credits <= 0) {
+        throw new Error("No credits remaining");
+      }
+      // Atomically deduct credit
       await ctx.db.patch(userCredits._id, {
         credits: userCredits.credits - 1,
       });
       return userCredits.credits - 1;
     } else {
-      // Create new record with default credits minus one (for this generation)
+      // First-time user: create record with default credits minus one
       await ctx.db.insert("userCredits", {
         userId: args.userId,
         credits: DEFAULT_CREDITS - 1,
       });
       return DEFAULT_CREDITS - 1;
     }
+  },
+});
+
+// Internal mutation to refund a credit (called when generation fails)
+export const refundCredit = internalMutation({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const userCredits = await ctx.db
+      .query("userCredits")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .unique();
+
+    if (userCredits) {
+      await ctx.db.patch(userCredits._id, {
+        credits: userCredits.credits + 1,
+      });
+      return userCredits.credits + 1;
+    }
+    // If no record exists, this shouldn't happen but create with default
+    await ctx.db.insert("userCredits", {
+      userId: args.userId,
+      credits: DEFAULT_CREDITS,
+    });
+    return DEFAULT_CREDITS;
   },
 });
