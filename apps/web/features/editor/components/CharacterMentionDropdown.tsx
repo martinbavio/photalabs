@@ -113,8 +113,8 @@ export function CharacterMentionDropdown({
           className={cn(
             "w-full flex items-center gap-3 px-3 py-2 rounded-lg",
             "text-left text-sm text-text-primary",
-            "hover:bg-border transition-colors",
-            highlightedIndex === index && "bg-border"
+            "transition-colors",
+            highlightedIndex === index ? "bg-border" : "hover:bg-border"
           )}
         >
           {character.imageUrls[0] ? (

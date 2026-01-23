@@ -35,7 +35,7 @@ export default function AuthenticatedLayout({
   return (
     <div className="flex min-h-screen bg-bg-primary">
       <Sidebar />
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto relative z-10">
         <ErrorBoundary>{children}</ErrorBoundary>
       </main>
     </div>
