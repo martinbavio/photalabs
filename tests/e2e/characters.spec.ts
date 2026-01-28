@@ -41,7 +41,7 @@ test.describe("Characters Page", () => {
 
     // Modal elements should be visible
     await expect(page.getByPlaceholder("Enter character name...")).toBeVisible();
-    await expect(page.getByText("Reference Images")).toBeVisible();
+    await expect(page.getByText("Reference Images", { exact: true })).toBeVisible();
     await expect(page.getByText("0/5 uploaded")).toBeVisible();
     await expect(page.getByText("Tips for best results")).toBeVisible();
     await expect(page.getByRole("button", { name: "Cancel" })).toBeVisible();
@@ -94,18 +94,13 @@ test.describe("Characters Page", () => {
     await expect(page.getByRole("heading", { name: "Create New Character" })).not.toBeVisible();
   });
 
-  test("close button (X) closes modal", async ({ page }) => {
+  test("escape key closes modal", async ({ page }) => {
     // Open modal
     await page.getByRole("button", { name: /create character/i }).click();
     await expect(page.getByRole("heading", { name: "Create New Character" })).toBeVisible();
 
-    // Click X button (find by its icon container)
-    const closeButton = page.locator('[title=""]').or(page.locator("button")).filter({
-      has: page.locator("svg"),
-    }).first();
-
-    // Alternative: click backdrop
-    await page.locator(".backdrop-blur-sm").click();
+    // Press Escape to close modal
+    await page.keyboard.press("Escape");
 
     // Modal should close
     await expect(page.getByRole("heading", { name: "Create New Character" })).not.toBeVisible();

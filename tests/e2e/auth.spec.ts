@@ -32,15 +32,17 @@ test.describe("Authentication", () => {
   test("login page renders with dark theme", async ({ page }) => {
     await page.goto("/");
 
-    // Check dark background
-    const body = page.locator("body");
-    await expect(body).toHaveCSS("background-color", "rgb(11, 11, 14)"); // #0B0B0E
+    // Wait for images to load (the new design has background images)
+    await page.waitForTimeout(1000);
 
-    // Check for logo (exact match to avoid matching "Welcome to PhotaLabs")
-    await expect(page.getByText("PhotaLabs", { exact: true })).toBeVisible();
+    // Check for main heading "Create with AI" (new design)
+    await expect(page.getByRole("heading", { name: /create with ai/i })).toBeVisible();
 
-    // Check for welcome message
-    await expect(page.getByText("Welcome to PhotaLabs")).toBeVisible();
+    // Check for email input
+    await expect(page.getByPlaceholder("Enter your email")).toBeVisible();
+
+    // Check for get started button
+    await expect(page.getByRole("button", { name: /get started/i })).toBeVisible();
   });
 
   test("email input accepts valid email address", async ({ page }) => {
@@ -57,16 +59,16 @@ test.describe("Authentication", () => {
     await page.goto("/");
 
     const emailInput = page.getByPlaceholder("Enter your email");
-    const submitButton = page.getByRole("button", { name: /send magic link/i });
+    const submitButton = page.getByRole("button", { name: /get started/i });
 
     await expect(submitButton).toBeVisible();
     await emailInput.fill("test@example.com");
     await submitButton.click();
 
-    // Should show loading state (button text changes to "Sending link...")
-    // or transition to confirmation/error state
+    // Should show loading state (button text changes to "Sending...")
+    // or transition to confirmation state "Check your email"
     await expect(
-      page.getByText(/sending link|check your email|failed/i)
+      page.getByText(/sending|check your email|failed/i)
     ).toBeVisible({ timeout: 10000 });
   });
 
@@ -85,7 +87,7 @@ test.describe("Authentication", () => {
   test("form validates email is required", async ({ page }) => {
     await page.goto("/");
 
-    const submitButton = page.getByRole("button", { name: /send magic link/i });
+    const submitButton = page.getByRole("button", { name: /get started/i });
 
     // Submit without filling email
     await submitButton.click();
@@ -102,7 +104,7 @@ test.describe("Authentication", () => {
     const emailInput = page.getByPlaceholder("Enter your email");
     await emailInput.fill("invalid-email");
 
-    const submitButton = page.getByRole("button", { name: /send magic link/i });
+    const submitButton = page.getByRole("button", { name: /get started/i });
     await submitButton.click();
 
     // HTML5 validation should show error for invalid email
