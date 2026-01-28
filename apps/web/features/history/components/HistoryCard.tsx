@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import { Id } from "@photalabs/backend/convex/_generated/dataModel";
 import { cn } from "@/shared/utils/cn";
 
@@ -16,7 +16,8 @@ interface HistoryCardProps {
   onClick?: () => void;
 }
 
-export function HistoryCard({
+// Memoize to prevent re-renders when parent grid updates other cards
+export const HistoryCard = memo(function HistoryCard({
   imageUrl,
   prompt,
   characterMentions,
@@ -100,4 +101,4 @@ export function HistoryCard({
       </div>
     </div>
   );
-}
+});

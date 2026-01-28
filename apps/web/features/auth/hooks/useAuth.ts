@@ -53,12 +53,12 @@ export function useAuth() {
     };
   }
 
-  const user = useQuery(api.users.viewer);
-  const isAuthenticated = useQuery(api.users.isAuthenticated);
+  // Use combined query to avoid waterfall (two sequential queries)
+  const result = useQuery(api.users.viewerWithAuthStatus);
 
   return {
-    user,
-    isAuthenticated: isAuthenticated ?? false,
-    isLoading: isAuthenticated === undefined,
+    user: result?.user ?? null,
+    isAuthenticated: result?.isAuthenticated ?? false,
+    isLoading: result === undefined,
   };
 }

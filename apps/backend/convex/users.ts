@@ -36,6 +36,35 @@ export const isAuthenticated = query({
   },
 });
 
+// Combined query to avoid waterfall - returns both user data and auth status in one request
+export const viewerWithAuthStatus = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      return { user: null, isAuthenticated: false };
+    }
+    const user = await ctx.db.get(userId);
+    if (!user) {
+      return { user: null, isAuthenticated: false };
+    }
+
+    // Get user credits
+    const userCredits = await ctx.db
+      .query("userCredits")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .unique();
+
+    return {
+      user: {
+        ...user,
+        credits: userCredits?.credits ?? DEFAULT_CREDITS,
+      },
+      isAuthenticated: true,
+    };
+  },
+});
+
 // Internal mutation to atomically reserve a credit (check + deduct in one transaction)
 // This prevents race conditions from concurrent generations
 export const reserveCredit = internalMutation({
