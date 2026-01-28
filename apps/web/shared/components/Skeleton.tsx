@@ -52,28 +52,6 @@ export function CharacterGridSkeleton({ count = 4 }: { count?: number }) {
   );
 }
 
-export function HistoryCardSkeleton() {
-  return (
-    <div className="bg-bg-panel rounded-[16px] border border-border overflow-hidden">
-      <Skeleton className="aspect-square w-full rounded-none" />
-      <div className="p-4 space-y-2">
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-3 w-2/3" />
-      </div>
-    </div>
-  );
-}
-
-export function HistoryGridSkeleton({ count = 8 }: { count?: number }) {
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-      {Array.from({ length: count }).map((_, i) => (
-        <HistoryCardSkeleton key={i} />
-      ))}
-    </div>
-  );
-}
-
 export function HistoryPanelSkeleton({ count = 5 }: { count?: number }) {
   return (
     <div className="flex flex-col gap-3">
