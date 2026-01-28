@@ -1,13 +1,20 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import dynamic from "next/dynamic";
 import { useSearchParams, useRouter } from "next/navigation";
 import { History } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "@photalabs/backend/convex/_generated/api";
 import { Id } from "@photalabs/backend/convex/_generated/dataModel";
-import { InputPanel, ResultPanel, HistoryPanel, useGenerate } from "@/features/editor";
+import { InputPanel, ResultPanel, useGenerate } from "@/features/editor";
 import { cn } from "@/shared/utils/cn";
+
+// Lazy load HistoryPanel - only shown when user clicks History button
+const HistoryPanel = dynamic(
+  () => import("@/features/editor/components/HistoryPanel").then((mod) => mod.HistoryPanel),
+  { ssr: false }
+);
 
 export default function CreatePage() {
   const searchParams = useSearchParams();

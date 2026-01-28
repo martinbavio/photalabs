@@ -1,10 +1,18 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { Plus } from "lucide-react";
 import { Id } from "@photalabs/backend/convex/_generated/dataModel";
-import { CharacterGrid, CharacterModal, useCharacters } from "@/features/characters";
+import { CharacterGrid, useCharacters } from "@/features/characters";
 import { CharacterGridSkeleton } from "@/shared/components/Skeleton";
+
+// Lazy load CharacterModal - it's a heavy component (300+ lines with image upload logic)
+// that's only shown when user clicks "Create Character" or edits a character
+const CharacterModal = dynamic(
+  () => import("@/features/characters/components/CharacterModal").then((mod) => mod.CharacterModal),
+  { ssr: false }
+);
 
 export default function CharactersPage() {
   const { characters, isLoading, handleDelete } = useCharacters();

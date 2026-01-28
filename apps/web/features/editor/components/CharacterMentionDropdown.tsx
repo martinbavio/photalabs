@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState, useMemo } from "react";
 import { Id } from "@photalabs/backend/convex/_generated/dataModel";
 import { cn } from "@/shared/utils/cn";
 
@@ -18,7 +18,8 @@ interface CharacterMentionDropdownProps {
   position: { top: number; left: number };
 }
 
-export function CharacterMentionDropdown({
+// Memoize to prevent re-renders when parent's callback refs change
+export const CharacterMentionDropdown = memo(function CharacterMentionDropdown({
   characters,
   searchTerm,
   onSelect,
@@ -28,9 +29,13 @@ export function CharacterMentionDropdown({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
 
-  // Filter characters by search term
-  const filteredCharacters = characters.filter((char) =>
-    char.name.toLowerCase().includes(searchTerm.toLowerCase())
+  // Memoize filtered characters to avoid recalculating on every render
+  const filteredCharacters = useMemo(
+    () =>
+      characters.filter((char) =>
+        char.name.toLowerCase().includes(searchTerm.toLowerCase())
+      ),
+    [characters, searchTerm]
   );
 
   // Reset highlighted index when filtered results change
@@ -133,4 +138,4 @@ export function CharacterMentionDropdown({
       ))}
     </div>
   );
-}
+});

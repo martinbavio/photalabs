@@ -116,8 +116,8 @@ test.describe("Layout & Sidebar Navigation", () => {
     // Check for avatar initials
     await expect(page.getByText("JD")).toBeVisible();
 
-    // Check for credits display
-    await expect(page.getByText("25 credits left")).toBeVisible();
+    // Check for credits display (mock user has 20 credits)
+    await expect(page.getByText("20 credits left")).toBeVisible();
   });
 
   test("inactive navigation items have muted styling", async ({ page }) => {

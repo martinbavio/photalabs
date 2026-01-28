@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import { Id } from "@photalabs/backend/convex/_generated/dataModel";
 import { cn } from "@/shared/utils/cn";
 
@@ -17,7 +17,8 @@ interface HistoryItemProps {
   isSelected?: boolean;
 }
 
-export function HistoryItem({
+// Memoize to prevent re-renders when parent list updates other items
+export const HistoryItem = memo(function HistoryItem({
   imageUrl,
   prompt,
   characterMentions,
@@ -97,4 +98,4 @@ export function HistoryItem({
       </div>
     </button>
   );
-}
+});
